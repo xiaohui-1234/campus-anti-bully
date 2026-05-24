@@ -1,0 +1,316 @@
+.login-page {
+  min-height: 100vh;
+  background: #eefaf7;
+  box-sizing: border-box;
+  position: relative;
+  overflow-y: auto;
+}
+
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.97);
+  box-sizing: border-box;
+}
+
+.custom-nav-title {
+  height: 32px;
+  line-height: 32px;
+  padding: 0 32rpx;
+  text-align: center;
+  color: #1f2933;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main-content {
+  min-height: 100vh;
+  padding: 150rpx 48rpx calc(54rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr auto;
+}
+
+.welcome-block {
+  width: 100%;
+  grid-row: 2;
+  align-self: center;
+  margin: 0;
+  padding: 54rpx 44rpx 48rpx;
+  background: #ffffff;
+  border-radius: 28rpx;
+  box-shadow: 0 20rpx 52rpx rgba(0, 118, 112, 0.13);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.welcome-title {
+  color: #102522;
+  font-size: 48rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.welcome-desc {
+  margin-top: 24rpx;
+  color: #536764;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.wechat-login {
+  margin-top: 50rpx;
+  height: 112rpx;
+  border-radius: 56rpx;
+  background: #10b969;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  box-shadow: 0 16rpx 32rpx rgba(16, 185, 105, 0.26);
+}
+
+.wechat-login:active {
+  opacity: 0.86;
+}
+
+.wechat-login.is-loading {
+  opacity: 0.78;
+}
+
+.wechat-icon {
+  width: 62rpx;
+  height: 62rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  position: relative;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: #10b969;
+}
+
+.bubble.one {
+  width: 30rpx;
+  height: 24rpx;
+  left: 14rpx;
+  top: 18rpx;
+}
+
+.bubble.two {
+  width: 22rpx;
+  height: 18rpx;
+  right: 12rpx;
+  bottom: 14rpx;
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  left: 8rpx;
+  top: 7rpx;
+  box-shadow: 10rpx 0 0 #ffffff;
+}
+
+.agreement {
+  grid-row: 4;
+  margin-top: 42rpx;
+  align-self: end;
+  text-align: center;
+  color: #71817f;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.agreement text {
+  color: #10b969;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 156rpx 48rpx calc(72rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  z-index: 30;
+  overflow-y: auto;
+}
+
+.profile-dialog {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 30rpx;
+  padding: 40rpx 48rpx 38rpx;
+  box-sizing: border-box;
+  overflow-y: auto;
+  box-shadow: 0 34rpx 82rpx rgba(0, 0, 0, 0.22);
+}
+
+.dialog-title {
+  text-align: center;
+  color: #24384a;
+  font-size: 39rpx;
+  font-weight: 800;
+}
+
+.dialog-desc {
+  margin-top: 18rpx;
+  color: #6f8395;
+  font-size: 27rpx;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.field-label {
+  margin-top: 28rpx;
+  color: #24384a;
+  font-size: 29rpx;
+  font-weight: 800;
+}
+
+.avatar-button {
+  padding: 0;
+  margin: 18rpx auto 0;
+  width: 172rpx;
+  height: 172rpx;
+  border-radius: 86rpx;
+  background: transparent;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  box-sizing: border-box;
+}
+
+.avatar-button::after {
+  border: 0;
+}
+
+.avatar {
+  width: 172rpx;
+  height: 172rpx;
+  border-radius: 86rpx;
+  background: #f5f7fa;
+}
+
+.avatar-empty {
+  width: 172rpx;
+  height: 172rpx;
+  border-radius: 86rpx;
+  border: 2rpx solid #dceaf5;
+  background: #ffffff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.avatar-head {
+  position: absolute;
+  width: 64rpx;
+  height: 64rpx;
+  border: 9rpx solid #2f3135;
+  border-radius: 50%;
+  left: 50%;
+  top: 34rpx;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.avatar-body {
+  position: absolute;
+  width: 108rpx;
+  height: 56rpx;
+  border: 9rpx solid #2f3135;
+  border-bottom: 0;
+  border-radius: 70rpx 70rpx 0 0;
+  left: 50%;
+  bottom: 30rpx;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.avatar-tip,
+.nickname-tip {
+  margin-top: 16rpx;
+  color: #7f93a4;
+  font-size: 25rpx;
+  text-align: center;
+}
+
+.nickname-label {
+  margin-top: 30rpx;
+}
+
+.nickname-input {
+  margin-top: 18rpx;
+  height: 92rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid #d7e7f2;
+  padding: 0 34rpx;
+  color: #24384a;
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+.profile-warning {
+  margin-top: 22rpx;
+  text-align: center;
+  color: #10b969;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.dialog-actions {
+  margin-top: 24rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28rpx;
+}
+
+.dialog-button {
+  height: 86rpx;
+  border-radius: 43rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 31rpx;
+  font-weight: 800;
+}
+
+.dialog-button.cancel {
+  background: #e9f1f7;
+  color: #3f566a;
+}
+
+.dialog-button.confirm {
+  background: #bdebcf;
+  color: #ffffff;
+}
+
+.dialog-button.confirm.active {
+  background: #10b969;
+  box-shadow: 0 16rpx 32rpx rgba(16, 185, 105, 0.34);
+}
+
+.dialog-button:active {
+  opacity: 0.86;
+}

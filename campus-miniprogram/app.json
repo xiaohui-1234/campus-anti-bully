@@ -1,0 +1,57 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/home/index",
+    "pages/events/index",
+    "pages/devices/index",
+    "pages/status/index",
+    "pages/profile/index"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTitleText": "校园防霸凌",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f6f8fb"
+  },
+  "tabBar": {
+    "color": "#8a94a6",
+    "selectedColor": "#0f8b8d",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/events/index",
+        "iconPath": "assets/tabbar/events.png",
+        "selectedIconPath": "assets/tabbar/events-active.png",
+        "text": "事件"
+      },
+      {
+        "pagePath": "pages/devices/index",
+        "iconPath": "assets/tabbar/devices.png",
+        "selectedIconPath": "assets/tabbar/devices-active.png",
+        "text": "设备"
+      },
+      {
+        "pagePath": "pages/home/index",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png",
+        "text": "主页"
+      },
+      {
+        "pagePath": "pages/status/index",
+        "iconPath": "assets/tabbar/status.png",
+        "selectedIconPath": "assets/tabbar/status-active.png",
+        "text": "状态"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png",
+        "text": "个人"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

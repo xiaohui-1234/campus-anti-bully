@@ -1,0 +1,13 @@
+不是“id 和密码不对就接入随机数”。
+
+当前代码逻辑是：
+
+如果 app-id 为空，或以 your- 开头，就不调微信接口，直接走本地开发兜底：
+openid = "dev_openid_" + code
+如果配置了真实 app-id/app-secret，就会调用微信 jscode2session 换真实 openid
+如果真实配置不对，微信接口通常会返回错误，后端会登录失败，不应该生成随机 openid
+所以你现在反复新增，大概率是因为还在用默认配置：
+
+app-id: "your-app-id"
+app-secret: "your-app-secret"
+这时小程序每次 wx.login() 的 code 都不同，后端拼出来的 dev_openid_xxx 也不同。

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "校园防霸凌",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "loading-view": "../../components/loading-view/index"
+  }
+}

@@ -1,0 +1,53 @@
+<view class="custom-nav" style="{{navStyle}}">
+  <view class="custom-nav-title">校园防霸凌</view>
+</view>
+
+<view class="page" style="{{contentStyle}}">
+  <view class="page-title">设备</view>
+  <view class="page-subtitle">管理已绑定设备，查看在线状态并维护地点备注</view>
+
+  <view class="toolbar {{search_active || keyword ? 'toolbar-searching' : ''}}">
+    <view class="search-bar">
+      <view class="search-icon"></view>
+      <input class="search-input" placeholder="搜索设备名称、地点或编号" value="{{keyword}}" bindinput="onKeyword" bindfocus="onSearchFocus" bindblur="onSearchBlur" confirm-type="search" bindconfirm="reload" />
+    </view>
+    <view class="button search-button" bindtap="reload">搜索</view>
+    <view wx:if="{{!search_active && !keyword}}" class="button add-button" bindtap="openBind">添加设备</view>
+  </view>
+
+  <view class="section-head">
+    <view class="section-title">我的设备</view>
+    <view class="section-action" bindtap="reload">刷新</view>
+  </view>
+
+  <loading-view loading="{{loading}}" />
+  <block wx:if="{{devices.length}}">
+    <device-card wx:for="{{devices}}" wx:key="device_id" device="{{item}}" bind:open="openDetail" />
+  </block>
+  <empty-state wx:elif="{{!loading}}" title="暂无设备" desc="输入绑定码后添加第一台设备" />
+
+  <popup-panel visible="{{bindVisible}}" bind:close="closePanels">
+    <view class="detail-handle"></view>
+    <view class="detail-title">绑定设备</view>
+    <view class="detail-desc">输入设备编号和一次性绑定码，绑定后即可接收报警</view>
+    <input class="input form-input" placeholder="device_id" value="{{bindForm.device_id}}" bindinput="onBindDeviceId" />
+    <input class="input form-input" placeholder="绑定码" value="{{bindForm.bind_code}}" bindinput="onBindCode" />
+    <input class="input form-input" placeholder="设备名称" value="{{bindForm.device_name}}" bindinput="onBindName" />
+    <view class="button" bindtap="submitBind">确认绑定</view>
+  </popup-panel>
+
+  <popup-panel visible="{{detailVisible}}" bind:close="closePanels">
+    <view wx:if="{{currentDevice}}">
+      <view class="detail-handle"></view>
+      <view class="detail-title">{{currentDevice.device_name || currentDevice.deviceName || currentDevice.device_id}}</view>
+      <view class="detail-desc">这些信息只影响当前用户看到的设备备注</view>
+      <input class="input form-input" placeholder="设备名称" value="{{editForm.device_name}}" bindinput="onEditName" />
+      <input class="input form-input" placeholder="地点" value="{{editForm.location}}" bindinput="onEditLocation" />
+      <input class="input form-input" placeholder="备注" value="{{editForm.note}}" bindinput="onEditNote" />
+      <view class="detail-actions">
+        <view class="button danger" bindtap="submitUnbind">解绑</view>
+        <view class="button" bindtap="submitEdit">保存</view>
+      </view>
+    </view>
+  </popup-panel>
+</view>

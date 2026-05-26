@@ -1,5 +1,7 @@
 #include "bsp_timer.h"
 
+static volatile uint32_t g_AppMillis = 0;
+
 static void GENERAL_TIM_NVIC_Config(void)
 {
     NVIC_InitTypeDef NVIC_InitStructure; 
@@ -47,10 +49,16 @@ void GENERAL_TIM_Init(void)
 	GENERAL_TIM_Mode_Config();		
 }
 
+uint32_t App_Millis(void)
+{
+    return g_AppMillis;
+}
+
 void GENERAL_TIM_IRQHandler (void)
 {
 	if (TIM_GetITStatus( GENERAL_TIM, TIM_IT_Update) != RESET) 
 	{
 		TIM_ClearITPendingBit(GENERAL_TIM , TIM_FLAG_Update);  
+        g_AppMillis++;
 	}		 	
 }

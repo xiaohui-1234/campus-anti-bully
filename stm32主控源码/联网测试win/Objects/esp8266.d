@@ -31,7 +31,10 @@
 .\objects\esp8266.o: .\Library/stm32f10x_wwdg.h
 .\objects\esp8266.o: .\Library/misc.h
 .\objects\esp8266.o: .\Hardware/Common.h
+.\objects\esp8266.o: .\Hardware/campus_config.h
 .\objects\esp8266.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\esp8266.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\esp8266.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\objects\esp8266.o: .\System/Delay.h
+.\objects\esp8266.o: .\Hardware/campus_mqtt.h
+.\objects\esp8266.o: .\Time.h

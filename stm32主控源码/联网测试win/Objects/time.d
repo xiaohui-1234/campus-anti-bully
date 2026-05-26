@@ -32,6 +32,8 @@
 .\objects\time.o: Time.h
 .\objects\time.o: Hardware/esp8266.h
 .\objects\time.o: .\Hardware/Common.h
+.\objects\time.o: .\Hardware/campus_config.h
 .\objects\time.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\time.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\objects\time.o: System/bsp_timer.h
 .\objects\time.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\string.h

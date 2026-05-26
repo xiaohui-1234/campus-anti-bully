@@ -30,9 +30,6 @@
 .\objects\alarm.o: .\Library/stm32f10x_wwdg.h
 .\objects\alarm.o: .\Library/misc.h
 .\objects\alarm.o: Alarm\alarm.h
-.\objects\alarm.o: .\Hardware/Key.h
-.\objects\alarm.o: .\Hardware/esp8266.h
-.\objects\alarm.o: .\Hardware/Common.h
-.\objects\alarm.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\alarm.o: .\Hardware/campus_mqtt.h
 .\objects\alarm.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\alarm.o: .\Hardware/LED.h

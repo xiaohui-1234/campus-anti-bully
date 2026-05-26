@@ -127,3 +127,12 @@ device/{product_type}/{device_id}/status/online
 
 /-----------------------------------------------------------------/
 
+发布：device/{product_type}/{device_id}/bind
+说明：返回一个临时的绑定码存缓存用语绑定设备
+
+{
+  "mqtt_msg_id": "1779177600123-001-dev001",
+  "product_type": "anti_bullying",
+  "device_id":"dev001",
+  "bind_code":123456
+}

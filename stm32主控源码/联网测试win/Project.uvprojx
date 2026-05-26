@@ -664,6 +664,16 @@
               <FileType>5</FileType>
               <FilePath>.\System\Delay.h</FilePath>
             </File>
+            <File>
+              <FileName>bsp_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\bsp_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\bsp_timer.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -703,6 +713,21 @@
               <FileName>esp8266.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\esp8266.h</FilePath>
+            </File>
+            <File>
+              <FileName>campus_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\campus_config.h</FilePath>
+            </File>
+            <File>
+              <FileName>campus_mqtt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\campus_mqtt.c</FilePath>
+            </File>
+            <File>
+              <FileName>campus_mqtt.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\campus_mqtt.h</FilePath>
             </File>
             <File>
               <FileName>Common.c</FileName>
@@ -753,21 +778,6 @@
               <FileName>stm32f10x_it.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\User\stm32f10x_it.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Onenet</GroupName>
-          <Files>
-            <File>
-              <FileName>MqttKit.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Onenet\MqttKit.c</FilePath>
-            </File>
-            <File>
-              <FileName>MqttKit.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Onenet\MqttKit.h</FilePath>
             </File>
           </Files>
         </Group>

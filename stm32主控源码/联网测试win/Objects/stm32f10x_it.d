@@ -35,5 +35,6 @@
 .\objects\stm32f10x_it.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\objects\stm32f10x_it.o: .\Hardware/esp8266.h
 .\objects\stm32f10x_it.o: .\Hardware/Common.h
+.\objects\stm32f10x_it.o: .\Hardware/campus_config.h
 .\objects\stm32f10x_it.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\objects\stm32f10x_it.o: .\Time.h

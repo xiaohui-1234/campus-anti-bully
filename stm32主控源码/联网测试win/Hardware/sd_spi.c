@@ -15,6 +15,7 @@
 #define SD_CS_LOW()           GPIO_ResetBits(SD_GPIO, SD_CS_PIN)
 
 #define SD_DUMMY_BYTE         0xFF
+#define SD_SPI_FLAG_TIMEOUT   100000UL
 
 typedef enum {
   SD_TYPE_UNKNOWN = 0,
@@ -45,9 +46,20 @@ static void SD_SPI_SetPrescaler(uint16_t prescaler)
 
 static uint8_t spi_txrx(uint8_t data)
 {
-  while (SPI_I2S_GetFlagStatus(SD_SPI, SPI_I2S_FLAG_TXE) == RESET) {}
+  uint32_t timeout = SD_SPI_FLAG_TIMEOUT;
+
+  while (SPI_I2S_GetFlagStatus(SD_SPI, SPI_I2S_FLAG_TXE) == RESET) {
+    if (timeout-- == 0U) {
+      return SD_DUMMY_BYTE;
+    }
+  }
   SPI_I2S_SendData(SD_SPI, data);
-  while (SPI_I2S_GetFlagStatus(SD_SPI, SPI_I2S_FLAG_RXNE) == RESET) {}
+  timeout = SD_SPI_FLAG_TIMEOUT;
+  while (SPI_I2S_GetFlagStatus(SD_SPI, SPI_I2S_FLAG_RXNE) == RESET) {
+    if (timeout-- == 0U) {
+      return SD_DUMMY_BYTE;
+    }
+  }
   return (uint8_t)SPI_I2S_ReceiveData(SD_SPI);
 }
 

@@ -1,0 +1,695 @@
+#include "campus_mqtt.h"
+#include "campus_config.h"
+#include "esp8266.h"
+#include "ff.h"
+#include "LED.h"
+#include "System/Delay.h"
+#include "System/bsp_timer.h"
+#include "Time.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+	char mqtt_msg_id[48];
+	char event_id[64];
+	char object_key[160];
+	uint8_t used;
+	uint8_t finished;
+	uint8_t success;
+} CAMPUS_DEDUP_ENTRY;
+
+typedef struct {
+	char event_type[16];
+	char alarm_info[48];
+	char wav_path[64];
+	char post_msg_id[48];
+	uint32_t file_size;
+	uint8_t active;
+} CAMPUS_ALARM_CONTEXT;
+
+static CAMPUS_DEDUP_ENTRY g_DedupCache[CAMPUS_DEDUP_CACHE_SIZE];
+static uint8_t g_DedupCursor = 0;
+static CAMPUS_ALARM_CONTEXT g_AlarmCtx;
+static uint32_t g_MsgCounter = 0;
+
+static char g_PayloadBuf[CAMPUS_MQTT_PAYLOAD_MAX_LEN];
+static char g_MqttCmdBuf[CAMPUS_MQTT_CMD_MAX_LEN];
+static char g_UploadHost[CAMPUS_HTTP_HOST_MAX_LEN];
+static char g_UploadHostHeader[CAMPUS_HTTP_HOST_MAX_LEN + 8U];
+static char g_UploadPort[8];
+static char g_UploadPath[CAMPUS_HTTP_PATH_MAX_LEN];
+static char g_HttpHead[1024];
+static uint8_t g_UploadBuf[CAMPUS_HTTP_UPLOAD_CHUNK_SIZE];
+static char g_UploadUrl[CAMPUS_HTTP_PATH_MAX_LEN];
+static char g_SubPayload[RX_BUF_MAX_LEN];
+
+
+static void Campus_BuildTimestamp(char *out, uint32_t outSize)
+{
+	if ((out == 0) || (outSize == 0U)) {
+		return;
+	}
+	(void)Time_GetTimestampMsText(out, outSize);
+}
+static void Campus_BuildMsgId(char *out, uint32_t outSize)
+{
+	char ts[24];
+	uint32_t nowMs;
+	uint8_t hasTime;
+
+	if ((out == 0) || (outSize == 0U)) {
+		return;
+	}
+	g_MsgCounter++;
+	if (g_MsgCounter > 999UL) {
+		g_MsgCounter = 1UL;
+	}
+
+	hasTime = Time_GetTimestampMsText(ts, sizeof(ts));
+	if (hasTime) {
+		(void)snprintf(out, outSize, "%s-%03lu-%s",
+			ts,
+			(unsigned long)g_MsgCounter,
+			CAMPUS_DEVICE_ID);
+	} else {
+		nowMs = App_Millis();
+		(void)snprintf(out, outSize, "u%010lu-%03lu-%s",
+			(unsigned long)nowMs,
+			(unsigned long)g_MsgCounter,
+			CAMPUS_DEVICE_ID);
+	}
+}
+
+static uint8_t Campus_JsonGetString(const char *json, const char *key, char *out, uint32_t outSize)
+{
+	char pattern[40];
+	const char *p;
+	const char *e;
+	uint32_t len;
+
+	if ((json == 0) || (key == 0) || (out == 0) || (outSize == 0U)) {
+		return 0;
+	}
+
+	(void)snprintf(pattern, sizeof(pattern), "\"%s\":\"", key);
+	p = strstr(json, pattern);
+	if (p == 0) {
+		out[0] = '\0';
+		return 0;
+	}
+	p += strlen(pattern);
+	e = strchr(p, '"');
+	if (e == 0) {
+		out[0] = '\0';
+		return 0;
+	}
+
+	len = (uint32_t)(e - p);
+	if (len >= outSize) {
+		len = outSize - 1U;
+	}
+	(void)memcpy(out, p, len);
+	out[len] = '\0';
+	return 1;
+}
+
+static uint8_t Campus_ExtractMqttSubPayload(const char *raw, const char *topic, char *out, uint32_t outSize)
+{
+	const char *p;
+	const char *topicStart;
+	const char *topicEnd;
+	const char *lenStart;
+	const char *payloadStart;
+	uint32_t topicLen;
+	uint32_t payloadLen;
+	uint32_t copied = 0U;
+	uint32_t available;
+	char topicBuf[160];
+
+	if ((raw == 0) || (topic == 0) || (out == 0) || (outSize == 0U)) {
+		return 0;
+	}
+	out[0] = '\0';
+
+	p = raw;
+	while ((p = strstr(p, "+MQTTSUBRECV:")) != 0) {
+		topicStart = strchr(p, '"');
+		if (topicStart == 0) {
+			break;
+		}
+		topicStart++;
+		topicEnd = strchr(topicStart, '"');
+		if (topicEnd == 0) {
+			break;
+		}
+
+		topicLen = (uint32_t)(topicEnd - topicStart);
+		if (topicLen >= sizeof(topicBuf)) {
+			topicLen = sizeof(topicBuf) - 1U;
+		}
+		(void)memcpy(topicBuf, topicStart, topicLen);
+		topicBuf[topicLen] = '\0';
+
+		lenStart = strchr(topicEnd + 1, ',');
+		if (lenStart == 0) {
+			break;
+		}
+		lenStart++;
+		payloadLen = (uint32_t)atoi(lenStart);
+		payloadStart = strchr(lenStart, ',');
+		if ((payloadStart == 0) || (payloadLen == 0U)) {
+			break;
+		}
+		payloadStart++;
+
+		available = (uint32_t)strlen(payloadStart);
+		if (payloadLen > available) {
+			payloadLen = available;
+		}
+
+		if (strcmp(topicBuf, topic) == 0) {
+			if ((copied + payloadLen) >= outSize) {
+				payloadLen = outSize - copied - 1U;
+			}
+			(void)memcpy(out + copied, payloadStart, payloadLen);
+			copied += payloadLen;
+			out[copied] = '\0';
+			if ((copied + 1U) >= outSize) {
+				break;
+			}
+		}
+
+		p = payloadStart + payloadLen;
+	}
+
+	return (copied != 0U) ? 1U : 0U;
+}
+
+static void Campus_SaveSubRecvFromRaw(const char *raw)
+{
+	uint32_t oldLen;
+	uint32_t copyLen;
+
+	if ((raw == 0) || (strstr(raw, "+MQTTSUBRECV") == 0)) {
+		return;
+	}
+
+	oldLen = g_MqttSubRecvPending ? (uint32_t)strlen(g_MqttSubRecvBuf) : 0U;
+	copyLen = (uint32_t)strlen(raw);
+	if ((oldLen + copyLen) >= RX_BUF_MAX_LEN) {
+		oldLen = 0U;
+		if (copyLen >= RX_BUF_MAX_LEN) {
+			copyLen = RX_BUF_MAX_LEN - 1U;
+		}
+	}
+
+	(void)memcpy(g_MqttSubRecvBuf + oldLen, raw, copyLen);
+	g_MqttSubRecvBuf[oldLen + copyLen] = '\0';
+	g_MqttSubRecvPending = 1U;
+}
+
+static bool Campus_MQTT_PublishJson(const char *topic, const char *payload)
+{
+	int written;
+	u32 payloadLen;
+	bool ok = false;
+
+	if ((topic == 0) || (payload == 0)) {
+		return false;
+	}
+
+	payloadLen = (u32)strlen(payload);
+	written = snprintf(g_MqttCmdBuf, sizeof(g_MqttCmdBuf),
+		"AT+MQTTPUBRAW=0,\"%s\",%lu,%u,0",
+		topic,
+		(unsigned long)payloadLen,
+		(unsigned int)CAMPUS_MQTT_QOS);
+	if ((written <= 0) || ((uint32_t)written >= sizeof(g_MqttCmdBuf))) {
+		printf("MQTT raw cmd too long\r\n");
+		return false;
+	}
+
+	g_ESP8266RawBusy = 1U;
+	strEsp8266_Fram_Record.InfBit.FramLength = 0;
+	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;
+	macESP8266_Usart("%s\r\n", g_MqttCmdBuf);
+	if (!ESP8266_WaitResponse("OK", "ERROR", 3000)) {
+		printf("MQTT raw command timeout\r\n");
+		printf("%s\r\n", strEsp8266_Fram_Record.Data_RX_BUF);
+		Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+		g_MqttConnected = 0U;
+		goto EXIT_PUBLISH;
+	}
+	if (strstr(strEsp8266_Fram_Record.Data_RX_BUF, "ERROR") != 0) {
+		printf("MQTT raw command rejected\r\n");
+		Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+		g_MqttConnected = 0U;
+		goto EXIT_PUBLISH;
+	}
+	if (strstr(strEsp8266_Fram_Record.Data_RX_BUF, ">") == 0) {
+		if (!ESP8266_WaitResponse(">", "ERROR", 5000)) {
+			printf("MQTT raw prompt timeout\r\n");
+			printf("%s\r\n", strEsp8266_Fram_Record.Data_RX_BUF);
+			Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+			g_MqttConnected = 0U;
+			goto EXIT_PUBLISH;
+		}
+		if (strstr(strEsp8266_Fram_Record.Data_RX_BUF, "ERROR") != 0) {
+			printf("MQTT raw prompt rejected\r\n");
+			Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+			g_MqttConnected = 0U;
+			goto EXIT_PUBLISH;
+		}
+	}
+
+	strEsp8266_Fram_Record.InfBit.FramLength = 0;
+	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;
+	ESP8266_SendRawBuffer((const uint8_t *)payload, payloadLen);
+	if (!ESP8266_WaitResponse("+MQTTPUB:OK", "+MQTTPUB:FAIL", 15000)) {
+		printf("MQTT raw publish timeout\r\n");
+		printf("%s\r\n", strEsp8266_Fram_Record.Data_RX_BUF);
+		Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+		g_MqttConnected = 0U;
+		goto EXIT_PUBLISH;
+	}
+	Campus_SaveSubRecvFromRaw(strEsp8266_Fram_Record.Data_RX_BUF);
+
+	if (strstr(strEsp8266_Fram_Record.Data_RX_BUF, "+MQTTPUB:FAIL") != 0) {
+		printf("MQTT raw publish failed\r\n");
+		g_MqttConnected = 0U;
+		goto EXIT_PUBLISH;
+	}
+	ok = true;
+
+EXIT_PUBLISH:
+	g_ESP8266RawBusy = 0U;
+	return ok;
+}
+void Campus_MQTT_OnConnected(void)
+{
+	(void)Campus_MQTT_PublishOnline();
+}
+
+bool Campus_MQTT_PublishOnline(void)
+{
+	char msgId[48];
+	char timestamp[24];
+
+	Campus_BuildMsgId(msgId, sizeof(msgId));
+	Campus_BuildTimestamp(timestamp, sizeof(timestamp));
+	(void)snprintf(g_PayloadBuf, sizeof(g_PayloadBuf),
+		"{\"mqtt_msg_id\":\"%s\",\"product_type\":\"%s\",\"device_id\":\"%s\",\"status\":\"online\",\"timestamp\":%s}",
+		msgId,
+		CAMPUS_PRODUCT_TYPE,
+		CAMPUS_DEVICE_ID,
+		timestamp);
+
+	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_STATUS_ONLINE, g_PayloadBuf);
+}
+bool Campus_MQTT_SetPendingAlarm(const char *eventType, const char *alarmInfo)
+{
+	if ((eventType == 0) || (alarmInfo == 0)) {
+		return false;
+	}
+
+	(void)memset(&g_AlarmCtx, 0, sizeof(g_AlarmCtx));
+	(void)strncpy(g_AlarmCtx.event_type, eventType, sizeof(g_AlarmCtx.event_type) - 1U);
+	(void)strncpy(g_AlarmCtx.alarm_info, alarmInfo, sizeof(g_AlarmCtx.alarm_info) - 1U);
+	g_AlarmCtx.active = 1U;
+	return true;
+}
+
+bool Campus_MQTT_PostAlarmForFile(const char *wavPath, uint32_t fileSize)
+{
+	char msgId[48];
+	char timestamp[24];
+	const char *fileName;
+	int written;
+
+	if ((wavPath == 0) || (wavPath[0] == '\0') || (g_AlarmCtx.active == 0U)) {
+		return false;
+	}
+
+	fileName = strrchr(wavPath, '/');
+	if (fileName != 0) {
+		fileName++;
+	} else {
+		fileName = strrchr(wavPath, '\\');
+		fileName = (fileName != 0) ? (fileName + 1) : wavPath;
+	}
+
+	Campus_BuildMsgId(msgId, sizeof(msgId));
+	Campus_BuildTimestamp(timestamp, sizeof(timestamp));
+	(void)strncpy(g_AlarmCtx.post_msg_id, msgId, sizeof(g_AlarmCtx.post_msg_id) - 1U);
+	(void)strncpy(g_AlarmCtx.wav_path, wavPath, sizeof(g_AlarmCtx.wav_path) - 1U);
+	g_AlarmCtx.file_size = fileSize;
+
+	written = snprintf(g_PayloadBuf, sizeof(g_PayloadBuf),
+		"{\"mqtt_msg_id\":\"%s\",\"product_type\":\"%s\",\"device_id\":\"%s\",\"event_type\":\"%s\",\"alarm_info\":\"%s\",\"file_name\":\"%s\",\"file_size\":%lu,\"content_type\":\"%s\",\"timestamp\":%s}",
+		msgId,
+		CAMPUS_PRODUCT_TYPE,
+		CAMPUS_DEVICE_ID,
+		g_AlarmCtx.event_type,
+		g_AlarmCtx.alarm_info,
+		fileName,
+		(unsigned long)fileSize,
+		CAMPUS_ALARM_CONTENT_TYPE,
+		timestamp);
+	if ((written <= 0) || ((uint32_t)written >= sizeof(g_PayloadBuf))) {
+		printf("alarm/post payload too long\r\n");
+		g_AlarmCtx.active = 0U;
+		return false;
+	}
+
+	if (!Campus_MQTT_PublishJson(CAMPUS_TOPIC_ALARM_POST, g_PayloadBuf)) {
+		printf("alarm/post failed\r\n");
+		return false;
+	}
+
+	printf("alarm/post ok\r\n");
+	return true;
+}
+static CAMPUS_DEDUP_ENTRY *Campus_DedupFind(const char *mqttMsgId, const char *eventId)
+{
+	uint8_t i;
+
+	for (i = 0; i < CAMPUS_DEDUP_CACHE_SIZE; i++) {
+		if ((g_DedupCache[i].used != 0U) &&
+			(strcmp(g_DedupCache[i].mqtt_msg_id, mqttMsgId) == 0) &&
+			(strcmp(g_DedupCache[i].event_id, eventId) == 0)) {
+			return &g_DedupCache[i];
+		}
+	}
+	return 0;
+}
+
+static CAMPUS_DEDUP_ENTRY *Campus_DedupRemember(const char *mqttMsgId, const char *eventId, const char *objectKey)
+{
+	CAMPUS_DEDUP_ENTRY *entry;
+
+	/* Ring-cache dedup: mqtt_msg_id + event_id identifies one upload command. */
+	entry = Campus_DedupFind(mqttMsgId, eventId);
+	if (entry != 0) {
+		return entry;
+	}
+
+	entry = &g_DedupCache[g_DedupCursor];
+	g_DedupCursor++;
+	if (g_DedupCursor >= CAMPUS_DEDUP_CACHE_SIZE) {
+		g_DedupCursor = 0U;
+	}
+
+	(void)memset(entry, 0, sizeof(*entry));
+	entry->used = 1U;
+	(void)strncpy(entry->mqtt_msg_id, mqttMsgId, sizeof(entry->mqtt_msg_id) - 1U);
+	(void)strncpy(entry->event_id, eventId, sizeof(entry->event_id) - 1U);
+	(void)strncpy(entry->object_key, objectKey, sizeof(entry->object_key) - 1U);
+	return entry;
+}
+
+static uint8_t Campus_ParseHttpUrl(const char *url, const char *objectKey)
+{
+	const char *p;
+	const char *hostStart;
+	const char *pathStart;
+	const char *bucketEnd;
+	const char *queryStart;
+	const char *colon;
+	uint32_t hostLen;
+	uint32_t pathLen;
+	uint32_t prefixLen;
+	int written;
+
+	if ((url == 0) || (strncmp(url, "http://", 7) != 0)) {
+		printf("only http upload url supported\r\n");
+		return 0;
+	}
+
+	hostStart = url + 7;
+	pathStart = strchr(hostStart, '/');
+	if (pathStart == 0) {
+		return 0;
+	}
+
+	colon = 0;
+	for (p = hostStart; p < pathStart; p++) {
+		if (*p == ':') {
+			colon = p;
+			break;
+		}
+	}
+
+	if (colon != 0) {
+		hostLen = (uint32_t)(colon - hostStart);
+		p = colon + 1;
+		pathLen = (uint32_t)(pathStart - p);
+		if ((pathLen == 0U) || (pathLen >= sizeof(g_UploadPort))) {
+			return 0;
+		}
+		(void)memcpy(g_UploadPort, p, pathLen);
+		g_UploadPort[pathLen] = '\0';
+	} else {
+		hostLen = (uint32_t)(pathStart - hostStart);
+		(void)strncpy(g_UploadPort, "80", sizeof(g_UploadPort) - 1U);
+		g_UploadPort[sizeof(g_UploadPort) - 1U] = '\0';
+	}
+
+	if ((hostLen == 0U) || (hostLen >= sizeof(g_UploadHost))) {
+		return 0;
+	}
+
+	(void)memcpy(g_UploadHost, hostStart, hostLen);
+	g_UploadHost[hostLen] = '\0';
+
+	queryStart = strchr(pathStart, '?');
+	if ((objectKey != 0) && (objectKey[0] != '\0') && (queryStart != 0)) {
+		bucketEnd = strchr(pathStart + 1, '/');
+		if (bucketEnd == 0) {
+			return 0;
+		}
+		prefixLen = (uint32_t)(bucketEnd - pathStart);
+		if (prefixLen >= 32U) {
+			return 0;
+		}
+		(void)memcpy(g_UploadPath, pathStart, prefixLen);
+		g_UploadPath[prefixLen] = '\0';
+		written = snprintf(g_UploadPath + prefixLen, sizeof(g_UploadPath) - prefixLen,
+			"/%s%s", objectKey, queryStart);
+		if ((written <= 0) || ((uint32_t)written >= (sizeof(g_UploadPath) - prefixLen))) {
+			return 0;
+		}
+	} else {
+		pathLen = (uint32_t)strlen(pathStart);
+		if ((pathLen == 0U) || (pathLen >= sizeof(g_UploadPath))) {
+			return 0;
+		}
+		(void)memcpy(g_UploadPath, pathStart, pathLen);
+		g_UploadPath[pathLen] = '\0';
+	}
+	return 1;
+}
+
+static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char *objectKey)
+{
+	FIL fp;
+	FRESULT fr;
+	UINT br;
+	uint32_t fileSize;
+	int headLen;
+	uint8_t ok = 0;
+
+	if ((url == 0) || (path == 0) || (path[0] == '\0')) {
+		return 0;
+	}
+	if (!Campus_ParseHttpUrl(url, objectKey)) {
+		return 0;
+	}
+	if (strcmp(g_UploadPort, "80") == 0) {
+		(void)strncpy(g_UploadHostHeader, g_UploadHost, sizeof(g_UploadHostHeader) - 1U);
+		g_UploadHostHeader[sizeof(g_UploadHostHeader) - 1U] = '\0';
+	} else {
+		(void)snprintf(g_UploadHostHeader, sizeof(g_UploadHostHeader), "%s:%s", g_UploadHost, g_UploadPort);
+	}
+
+	fr = f_open(&fp, path, FA_READ);
+	if (fr != FR_OK) {
+		printf("upload open fail fr=%d\r\n", (int)fr);
+		return 0;
+	}
+
+	fileSize = (uint32_t)f_size(&fp);
+	if (fileSize == 0U) {
+		(void)f_close(&fp);
+		return 0;
+	}
+
+	headLen = snprintf(g_HttpHead, sizeof(g_HttpHead),
+		"PUT %s HTTP/1.1\r\n"
+		"Host: %s\r\n"
+		"Content-Length: %lu\r\n"
+		"Connection: close\r\n"
+		"\r\n",
+		g_UploadPath,
+		g_UploadHostHeader,
+		(unsigned long)fileSize);
+	if ((headLen <= 0) || ((uint32_t)headLen >= sizeof(g_HttpHead))) {
+		printf("upload header too long\r\n");
+		(void)f_close(&fp);
+		return 0;
+	}
+
+	ucTcpClosedFlag = 0;
+	g_ESP8266RawBusy = 1;
+
+	if (!ESP8266_Link_Server(enumTCP, g_UploadHost, g_UploadPort, Single_ID_0)) {
+		printf("upload tcp link fail\r\n");
+		goto EXIT_UPLOAD;
+	}
+
+	if (!ESP8266_SendBuffer((const uint8_t *)g_HttpHead, (u32)headLen, Single_ID_0, 20000)) {
+		printf("upload header send fail\r\n");
+		goto EXIT_UPLOAD;
+	}
+
+	while (1) {
+		fr = f_read(&fp, g_UploadBuf, sizeof(g_UploadBuf), &br);
+		if (fr != FR_OK) {
+			printf("upload read fail fr=%d\r\n", (int)fr);
+			goto EXIT_UPLOAD;
+		}
+		if (br == 0U) {
+			break;
+		}
+		if (!ESP8266_SendBuffer(g_UploadBuf, (u32)br, Single_ID_0, 20000)) {
+			printf("upload body send fail\r\n");
+			goto EXIT_UPLOAD;
+		}
+	}
+
+	if (!ESP8266_WaitResponse("HTTP/1.1 200", "HTTP/1.1 201", 30000)) {
+		printf("upload http timeout\r\n");
+		goto EXIT_UPLOAD;
+	}
+
+	ok = 1U;
+
+EXIT_UPLOAD:
+	(void)ESP8266_Cmd("AT+CIPCLOSE", "OK", "ERROR", 2000);
+	Delay_ms(300);
+	strEsp8266_Fram_Record.InfBit.FramLength = 0;
+	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;
+	g_ESP8266RawBusy = 0;
+	(void)f_close(&fp);
+	LED0_OFF();
+	return ok;
+}
+
+static bool Campus_MQTT_PublishConfirm(const char *eventId, const char *objectKey, uint8_t success)
+{
+	char msgId[48];
+	int written;
+
+	Campus_BuildMsgId(msgId, sizeof(msgId));
+	written = snprintf(g_PayloadBuf, sizeof(g_PayloadBuf),
+		"{\"mqtt_msg_id\":\"%s\",\"product_type\":\"%s\",\"device_id\":\"%s\",\"event_id\":\"%s\",\"object_key\":\"%s\",\"upload_status\":\"%s\"}",
+		msgId,
+		CAMPUS_PRODUCT_TYPE,
+		CAMPUS_DEVICE_ID,
+		eventId,
+		objectKey,
+		(success != 0U) ? "success" : "failed");
+	if ((written <= 0) || ((uint32_t)written >= sizeof(g_PayloadBuf))) {
+		printf("confirm payload too long\r\n");
+		return false;
+	}
+
+	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_ALARM_CONFIRM, g_PayloadBuf);
+}
+
+void Campus_MQTT_ProcessSubRecv(void)
+{
+	char *json;
+	char mqttMsgId[48];
+	char eventId[64];
+	char objectKey[160];
+	CAMPUS_DEDUP_ENTRY *entry;
+	uint8_t uploadOk;
+
+	if (g_MqttSubRecvPending == 0U) {
+		return;
+	}
+
+	if (strstr(g_MqttSubRecvBuf, CAMPUS_TOPIC_ALARM_UPLOAD) == 0) {
+		goto EXIT_PROCESS;
+	}
+
+	if (!Campus_ExtractMqttSubPayload(g_MqttSubRecvBuf, CAMPUS_TOPIC_ALARM_UPLOAD,
+			g_SubPayload, sizeof(g_SubPayload))) {
+		printf("alarm/upload payload extract fail\r\n");
+		goto EXIT_PROCESS;
+	}
+
+	json = strchr(g_SubPayload, '{');
+	if (json == 0) {
+		printf("alarm/upload json start fail\r\n");
+		goto EXIT_PROCESS;
+	}
+
+	if (!Campus_JsonGetString(json, "mqtt_msg_id", mqttMsgId, sizeof(mqttMsgId)) ||
+		!Campus_JsonGetString(json, "event_id", eventId, sizeof(eventId)) ||
+		!Campus_JsonGetString(json, "object_key", objectKey, sizeof(objectKey)) ||
+		!Campus_JsonGetString(json, "upload_url", g_UploadUrl, sizeof(g_UploadUrl))) {
+		printf("alarm/upload parse fail\r\n");
+		goto EXIT_PROCESS;
+	}
+
+	entry = Campus_DedupFind(mqttMsgId, eventId);
+	if ((entry != 0) && (entry->finished != 0U)) {
+		printf("alarm/upload duplicate, confirm again\r\n");
+		(void)Campus_MQTT_PublishConfirm(entry->event_id, entry->object_key, entry->success);
+		goto EXIT_PROCESS;
+	}
+
+	entry = Campus_DedupRemember(mqttMsgId, eventId, objectKey);
+	if ((g_AlarmCtx.active == 0U) || (g_AlarmCtx.wav_path[0] == '\0')) {
+		printf("alarm/upload no local file\r\n");
+		entry->finished = 1U;
+		entry->success = 0U;
+		(void)Campus_MQTT_PublishConfirm(eventId, objectKey, 0U);
+		LED0_OFF();
+		goto EXIT_PROCESS;
+	}
+
+	uploadOk = Campus_HttpPutFile(g_UploadUrl, g_AlarmCtx.wav_path, objectKey);
+	entry->finished = 1U;
+	entry->success = uploadOk ? 1U : 0U;
+	(void)Campus_MQTT_PublishConfirm(eventId, objectKey, entry->success);
+	g_AlarmCtx.active = 0U;
+
+EXIT_PROCESS:
+	g_MqttSubRecvBuf[0] = '\0';
+	g_MqttSubRecvPending = 0U;
+}
+
+void Campus_MQTT_Service(uint32_t nowMs)
+{
+	static uint32_t s_nextOnlineMs = 0;
+	uint32_t interval;
+
+	if (g_MqttConnected == 0U || g_ESP8266RawBusy != 0U) {
+		return;
+	}
+
+	if (s_nextOnlineMs == 0U) {
+		s_nextOnlineMs = nowMs + CAMPUS_ONLINE_INTERVAL_MS;
+		return;
+	}
+
+	if ((int32_t)(nowMs - s_nextOnlineMs) < 0) {
+		return;
+	}
+
+	interval = Campus_MQTT_PublishOnline() ? CAMPUS_ONLINE_INTERVAL_MS : CAMPUS_ONLINE_RETRY_MS;
+	s_nextOnlineMs = nowMs + interval;
+}

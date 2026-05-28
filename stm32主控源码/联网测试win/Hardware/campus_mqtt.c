@@ -413,13 +413,9 @@ static uint8_t Campus_ParseHttpUrl(const char *url, const char *objectKey)
 	const char *p;
 	const char *hostStart;
 	const char *pathStart;
-	const char *bucketEnd;
-	const char *queryStart;
 	const char *colon;
 	uint32_t hostLen;
 	uint32_t pathLen;
-	uint32_t prefixLen;
-	int written;
 
 	if ((url == 0) || (strncmp(url, "http://", 7) != 0)) {
 		printf("only http upload url supported\r\n");
@@ -462,39 +458,147 @@ static uint8_t Campus_ParseHttpUrl(const char *url, const char *objectKey)
 	(void)memcpy(g_UploadHost, hostStart, hostLen);
 	g_UploadHost[hostLen] = '\0';
 
-	queryStart = strchr(pathStart, '?');
-	if ((objectKey != 0) && (objectKey[0] != '\0') && (queryStart != 0)) {
-		bucketEnd = strchr(pathStart + 1, '/');
-		if (bucketEnd == 0) {
-			return 0;
-		}
-		prefixLen = (uint32_t)(bucketEnd - pathStart);
-		if (prefixLen >= 32U) {
-			return 0;
-		}
-		(void)memcpy(g_UploadPath, pathStart, prefixLen);
-		g_UploadPath[prefixLen] = '\0';
-		written = snprintf(g_UploadPath + prefixLen, sizeof(g_UploadPath) - prefixLen,
-			"/%s%s", objectKey, queryStart);
-		if ((written <= 0) || ((uint32_t)written >= (sizeof(g_UploadPath) - prefixLen))) {
-			return 0;
-		}
-	} else {
-		pathLen = (uint32_t)strlen(pathStart);
-		if ((pathLen == 0U) || (pathLen >= sizeof(g_UploadPath))) {
-			return 0;
-		}
-		(void)memcpy(g_UploadPath, pathStart, pathLen);
-		g_UploadPath[pathLen] = '\0';
+	(void)objectKey;
+	pathLen = (uint32_t)strlen(pathStart);
+	if ((pathLen == 0U) || (pathLen >= sizeof(g_UploadPath))) {
+		return 0;
 	}
+	(void)memcpy(g_UploadPath, pathStart, pathLen);
+	g_UploadPath[pathLen] = '\0';
 	return 1;
+}
+
+static void Campus_PrintUploadHeadInfo(const char *objectKey, uint32_t fileSize, int headLen)
+{
+	const char *query;
+	uint32_t requestLineLen;
+
+	query = strchr(g_UploadPath, '?');
+	requestLineLen = (uint32_t)strlen(g_UploadPath) + 13U;
+	printf("upload host=%s:%s, head=%d, line=%lu, file=%lu\r\n",
+		g_UploadHost,
+		g_UploadPort,
+		headLen,
+		(unsigned long)requestLineLen,
+		(unsigned long)fileSize);
+	printf("upload path_len=%lu, key=%u, query=%u, alg=%u, cred=%u, signed=%u, sig=%u\r\n",
+		(unsigned long)strlen(g_UploadPath),
+		((objectKey != 0) && (strstr(g_UploadPath, objectKey) != 0)) ? 1U : 0U,
+		(query != 0) ? 1U : 0U,
+		(strstr(g_UploadPath, "X-Amz-Algorithm=") != 0) ? 1U : 0U,
+		(strstr(g_UploadPath, "X-Amz-Credential=") != 0) ? 1U : 0U,
+		(strstr(g_UploadPath, "X-Amz-SignedHeaders=") != 0) ? 1U : 0U,
+		(strstr(g_UploadPath, "X-Amz-Signature=") != 0) ? 1U : 0U);
+}
+
+static uint8_t Campus_HttpHasEarlyError(void)
+{
+	strEsp8266_Fram_Record.Data_RX_BUF[strEsp8266_Fram_Record.InfBit.FramLength] = '\0';
+	if ((strstr(strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 400") != 0) ||
+		(strstr(strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 403") != 0) ||
+		(strstr(strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 500") != 0) ||
+		(strstr(strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 503") != 0)) {
+		return 1U;
+	}
+	return 0U;
+}
+
+static uint8_t Campus_HttpPutFileTransparent(FIL *fp, int headLen, uint32_t fileSize)
+{
+	FRESULT fr;
+	UINT br;
+	uint8_t ok = 0U;
+	uint8_t streamStarted = 0U;
+	uint8_t transparentModeEnabled = 0U;
+	uint32_t sentBytes = 0U;
+
+	printf("upload transparent start\r\n");
+	ucTcpClosedFlag = 0;
+	g_ESP8266RawBusy = 1;
+	(void)ESP8266_Cmd("AT+CIPCLOSE", "OK", "ERROR", 1000);
+	(void)ESP8266_Cmd("AT+CIPMUX=0", "OK", 0, 1000);
+	(void)ESP8266_Cmd("AT+CIPMODE=0", "OK", 0, 1000);
+	(void)ESP8266_WaitResponse("OK", "ERROR", 100);
+
+	if (!ESP8266_Link_Server(enumTCP, g_UploadHost, g_UploadPort, Single_ID_0)) {
+		printf("upload tcp link fail\r\n");
+		goto EXIT_TRANSPARENT;
+	}
+
+	if (!ESP8266_UnvarnishSend()) {
+		printf("upload transparent mode fail\r\n");
+		goto EXIT_TRANSPARENT;
+	}
+	transparentModeEnabled = 1U;
+
+	if (!ESP8266_Cmd("AT+CIPSEND", ">", 0, 5000)) {
+		printf("upload stream start fail\r\n");
+		goto EXIT_TRANSPARENT;
+	}
+	streamStarted = 1U;
+	Delay_ms(150);
+
+	strEsp8266_Fram_Record.InfBit.FramLength = 0;
+	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;
+	ESP8266_SendRawBuffer((const uint8_t *)g_HttpHead, (u32)headLen);
+	Delay_ms(300);
+	if (Campus_HttpHasEarlyError()) {
+		printf("upload header rejected\r\n");
+		printf("%s\r\n", strEsp8266_Fram_Record.Data_RX_BUF);
+		goto EXIT_TRANSPARENT;
+	}
+
+	while (1) {
+		fr = f_read(fp, g_UploadBuf, sizeof(g_UploadBuf), &br);
+		if (fr != FR_OK) {
+			printf("upload read fail fr=%d\r\n", (int)fr);
+			goto EXIT_TRANSPARENT;
+		}
+		if (br == 0U) {
+			break;
+		}
+
+		ESP8266_SendRawBuffer(g_UploadBuf, (u32)br);
+		sentBytes += (uint32_t)br;
+		if (((sentBytes & 0x3FFFU) == 0U) || (sentBytes >= fileSize)) {
+			printf("upload sent %lu/%lu\r\n", (unsigned long)sentBytes, (unsigned long)fileSize);
+		}
+	}
+
+	if (!ESP8266_WaitResponse("HTTP/1.1 200", "HTTP/1.1 201", CAMPUS_HTTP_UPLOAD_RESPONSE_TIMEOUT_MS)) {
+		if (ucTcpClosedFlag) {
+			printf("upload http closed\r\n");
+		} else {
+			printf("upload http timeout\r\n");
+		}
+		printf("%s\r\n", strEsp8266_Fram_Record.Data_RX_BUF);
+		goto EXIT_TRANSPARENT;
+	}
+
+	if ((strstr((char *)strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 200") == 0) &&
+		(strstr((char *)strEsp8266_Fram_Record.Data_RX_BUF, "HTTP/1.1 201") == 0)) {
+		printf("upload http reject\r\n");
+		goto EXIT_TRANSPARENT;
+	}
+
+	ok = 1U;
+
+EXIT_TRANSPARENT:
+	if (streamStarted) {
+		ESP8266_ExitUnvarnishSend();
+	}
+	(void)ESP8266_Cmd("AT+CIPCLOSE", "OK", "ERROR", 2000);
+	if (transparentModeEnabled) {
+		(void)ESP8266_Cmd("AT+CIPMODE=0", "OK", 0, 1000);
+	}
+	g_ESP8266RawBusy = 0;
+	return ok;
 }
 
 static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char *objectKey)
 {
 	FIL fp;
 	FRESULT fr;
-	UINT br;
 	uint32_t fileSize;
 	int headLen;
 	uint8_t ok = 0;
@@ -527,6 +631,7 @@ static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char 
 	headLen = snprintf(g_HttpHead, sizeof(g_HttpHead),
 		"PUT %s HTTP/1.1\r\n"
 		"Host: %s\r\n"
+		"Content-Type: " CAMPUS_ALARM_CONTENT_TYPE "\r\n"
 		"Content-Length: %lu\r\n"
 		"Connection: close\r\n"
 		"\r\n",
@@ -538,48 +643,20 @@ static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char 
 		(void)f_close(&fp);
 		return 0;
 	}
-
-	ucTcpClosedFlag = 0;
-	g_ESP8266RawBusy = 1;
-
-	if (!ESP8266_Link_Server(enumTCP, g_UploadHost, g_UploadPort, Single_ID_0)) {
-		printf("upload tcp link fail\r\n");
-		goto EXIT_UPLOAD;
+	Campus_PrintUploadHeadInfo(objectKey, fileSize, headLen);
+	if ((strstr(g_UploadPath, "X-Amz-Algorithm=") == 0) ||
+		(strstr(g_UploadPath, "X-Amz-Credential=") == 0) ||
+		(strstr(g_UploadPath, "X-Amz-SignedHeaders=") == 0) ||
+		(strstr(g_UploadPath, "X-Amz-Signature=") == 0)) {
+		printf("upload url missing signed query\r\n");
+		(void)f_close(&fp);
+		return 0;
 	}
 
-	if (!ESP8266_SendBuffer((const uint8_t *)g_HttpHead, (u32)headLen, Single_ID_0, 20000)) {
-		printf("upload header send fail\r\n");
-		goto EXIT_UPLOAD;
-	}
+	ok = Campus_HttpPutFileTransparent(&fp, headLen, fileSize);
 
-	while (1) {
-		fr = f_read(&fp, g_UploadBuf, sizeof(g_UploadBuf), &br);
-		if (fr != FR_OK) {
-			printf("upload read fail fr=%d\r\n", (int)fr);
-			goto EXIT_UPLOAD;
-		}
-		if (br == 0U) {
-			break;
-		}
-		if (!ESP8266_SendBuffer(g_UploadBuf, (u32)br, Single_ID_0, 20000)) {
-			printf("upload body send fail\r\n");
-			goto EXIT_UPLOAD;
-		}
-	}
-
-	if (!ESP8266_WaitResponse("HTTP/1.1 200", "HTTP/1.1 201", 30000)) {
-		printf("upload http timeout\r\n");
-		goto EXIT_UPLOAD;
-	}
-
-	ok = 1U;
-
-EXIT_UPLOAD:
-	(void)ESP8266_Cmd("AT+CIPCLOSE", "OK", "ERROR", 2000);
-	Delay_ms(300);
 	strEsp8266_Fram_Record.InfBit.FramLength = 0;
 	strEsp8266_Fram_Record.InfBit.FramFinishFlag = 0;
-	g_ESP8266RawBusy = 0;
 	(void)f_close(&fp);
 	LED0_OFF();
 	return ok;

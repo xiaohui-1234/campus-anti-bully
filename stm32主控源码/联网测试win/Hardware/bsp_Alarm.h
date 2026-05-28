@@ -3,13 +3,13 @@
 
 #include "stm32f10x.h"
 
-#define FMQ_GPIO_PORT    	GPIOB			            /* GPIO端口 */
-#define FMQ_GPIO_CLK 	    RCC_APB2Periph_GPIOB		/* GPIO端口时钟 */
-#define FMQ_GPIO_PIN				GPIO_Pin_8			        /* 连接到SCL时钟线的GPIO */
+#define FMQ_GPIO_PORT    	GPIOB			            /* GPIO绔彛 */
+#define FMQ_GPIO_CLK 	    RCC_APB2Periph_GPIOB		/* GPIO绔彛鏃堕挓 */
+#define FMQ_GPIO_PIN				GPIO_Pin_8			        /* 杩炴帴鍒癝CL鏃堕挓绾跨殑GPIO */
 
 
 
-void Alarm_Init(void);//蜂鸣器初始化函数
+void Alarm_Init(void);//铚傞福鍣ㄥ垵濮嬪寲鍑芥暟
 void Alarm_OFF();
 void Alarm_ON();
 

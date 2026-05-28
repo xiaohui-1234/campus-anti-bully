@@ -1,7 +1,7 @@
 #include "bsp_Alarm.h"
 
 
-void Alarm_Init(void)//·äÃùÆ÷³õÊ¼»¯º¯Êı
+void Alarm_Init(void)//èœ‚é¸£å™¨åˆå§‹åŒ–å‡½æ•°
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	

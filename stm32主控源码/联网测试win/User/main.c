@@ -404,20 +404,24 @@ int main(void)
     uint32_t nextNtpSyncMs;
     uint32_t nextMqttReconnectMs;
 
-    Serial_Init();
+    Serial_Init();						//语音串口  初始化PB10 PB11 9600  将接收到的信息通过串口发送stm32上
     GENERAL_TIM_Init();
     LED_Init();
     Key_Init();
-    USART_Config();
+    USART_Config();						//设置串口中断 打印wifi收发信息 占用PA9 PA10 115200 将接收到的信息通过串口发送stm32上
     Get_STM32_UID(uid_str);
     printf("USART1 OK\r\n");
     printf("STM32 UID: %s\r\n", uid_str);
 
-    ESP8266_Init();
-    ESP8266_StaTcpClient();
+    ESP8266_Init();						 //设置通信串口 初始化WiFi模块使用的接口和外设 PA2  PA3 115200  
+    ESP8266_StaTcpClient();			   	//WiFi模块设置   让ESP8266可以通过wifi访问外网
+	
+	
     nextNtpSyncMs = App_Millis() + (Time_IsValid() ? CAMPUS_NTP_SYNC_INTERVAL_MS : CAMPUS_NTP_RETRY_MS);
     nextMqttReconnectMs = App_Millis() + 10000UL;
-    Serial_SendString("test");
+	
+	
+    Serial_SendString("test");			//语音串口发送字符串
 
     while (1) {
         uint8_t key;
@@ -426,11 +430,13 @@ int main(void)
         key = Key_GetNum();
         controlBlocked = App_IsRecording();
         if (!controlBlocked) {
-            Open_Penetmode(key);
+            Open_Penetmode(key);	//开启串口1和2的穿透模式
             Alarm_ButtomDown(key);
         }
 
-        if (g_PassthroughMode == 0U) {
+        if (g_PassthroughMode == 0U) {		//在没有进入穿透模式下
+			
+			//语音模块的交互
             if (USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == SET) {
                 uint8_t data;
 

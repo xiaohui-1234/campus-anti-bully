@@ -67,7 +67,7 @@ campus:
     access-key: "minioadmin"
     secret-key: "minioadmin123"
     bucket: "campus"
-    public-endpoint: "http://47.116.107.124:9000"
+    public-endpoint: "https://oss-shanghai.1314-520.xyz"
   cache:
     mqtt-dedup-ttl-seconds: 10
     device-online-ttl-seconds: 90

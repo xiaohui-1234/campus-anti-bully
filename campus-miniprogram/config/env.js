@@ -1,6 +1,6 @@
 const env = {
-  baseUrl: 'http://39.105.153.170/api/v1',
-  wsUrl: 'ws://39.105.153.170/ws/v1/client'
+  baseUrl: 'https://campus.1314-520.xyz/api/v1',
+  wsUrl: 'wss://campus.1314-520.xyz/ws/v1/client'
 }
 
 module.exports = env

@@ -86,3 +86,4 @@ function flushWaiters(err, data) {
 }
 
 module.exports = request
+module.exports.refreshAccessToken = refreshAccessToken

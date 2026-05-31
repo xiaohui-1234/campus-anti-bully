@@ -1,5 +1,6 @@
 const env = require('../config/env')
 const storage = require('../utils/storage')
+const request = require('./request')
 const eventApi = require('./event-api')
 
 let socketTask = null
@@ -77,6 +78,15 @@ function reconnect() {
   clearTimeout(reconnectTimer)
   const delay = Math.min(30000, 1000 * Math.pow(2, reconnectCount++))
   reconnectTimer = setTimeout(async () => {
+    try {
+      if (storage.getRefreshToken()) {
+        await request.refreshAccessToken()
+      }
+    } catch (err) {
+      storage.clearTokens()
+      wx.navigateTo({ url: '/pages/login/index' })
+      return
+    }
     connect()
     try {
       const events = await eventApi.unpulled()

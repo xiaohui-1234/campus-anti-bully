@@ -404,29 +404,34 @@ int main(void)
     uint32_t nextNtpSyncMs;
     uint32_t nextMqttReconnectMs;
 
+    // 1. 初始化本地外设：语音串口、系统定时、LED、按键和调试串口。
     Serial_Init();						//语音串口  初始化PB10 PB11 9600  将接收到的信息通过串口发送stm32上
     GENERAL_TIM_Init();
     LED_Init();
     Key_Init();
     USART_Config();						//设置串口中断 打印wifi收发信息 占用PA9 PA10 115200 将接收到的信息通过串口发送stm32上
+
+    // 2. 读取芯片唯一ID，作为设备身份相关信息输出到调试串口。
     Get_STM32_UID(uid_str);
     printf("USART1 OK\r\n");
     printf("STM32 UID: %s\r\n", uid_str);
 
+    // 3. 初始化ESP8266，并尝试接入WiFi、建立MQTT连接。
     ESP8266_Init();						 //设置通信串口 初始化WiFi模块使用的接口和外设 PA2  PA3 115200  
     ESP8266_StaTcpClient();			   	//WiFi模块设置   让ESP8266可以通过wifi访问外网
 	
-	
+    // 4. 设置后续NTP同步和MQTT重连的首次触发时间。
     nextNtpSyncMs = App_Millis() + (Time_IsValid() ? CAMPUS_NTP_SYNC_INTERVAL_MS : CAMPUS_NTP_RETRY_MS);
     nextMqttReconnectMs = App_Millis() + 10000UL;
 	
-	
+    // 5. 给语音模块发送测试字符串，确认语音串口链路可用。
     Serial_SendString("test");			//语音串口发送字符串
 
     while (1) {
         uint8_t key;
         uint8_t controlBlocked;
 
+        // 6. 轮询按键；录音期间屏蔽按键控制，避免告警流程被重复触发。
         key = Key_GetNum();
         controlBlocked = App_IsRecording();
         if (!controlBlocked) {
@@ -434,9 +439,10 @@ int main(void)
             Alarm_ButtomDown(key);
         }
 
+        // 7. 只有在非AT穿透模式下，才运行本机业务逻辑。
         if (g_PassthroughMode == 0U) {		//在没有进入穿透模式下
 			
-			//语音模块的交互
+			// 8. 处理语音模块串口输入，按命令编号触发不同告警类型。
             if (USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == SET) {
                 uint8_t data;
 
@@ -477,6 +483,7 @@ int main(void)
                 }
             }
 
+            // 9. 非录音期间处理远程控制、MQTT订阅消息、MQTT保活重连和NTP校时。
             if (!App_IsRecording()) {
                 switch (flag) {
                     case 'a':
@@ -514,6 +521,7 @@ int main(void)
                 }
             }
 
+            // 10. 录音期间由DMA半满/全满标志驱动，把ADC采样分块写入WAV文件。
             if (g_AudioHalfReady) {
                 g_AudioHalfReady = 0;
                 Audio_ToWav_WriteHalf(0);

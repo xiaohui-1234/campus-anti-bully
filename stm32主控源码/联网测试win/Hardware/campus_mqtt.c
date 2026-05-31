@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// 后端上传指令去重记录，避免同一条MQTT消息重复触发文件上传。
 typedef struct {
 	char mqtt_msg_id[48];
 	char event_id[64];
@@ -19,6 +20,7 @@ typedef struct {
 	uint8_t success;
 } CAMPUS_DEDUP_ENTRY;
 
+// 当前待上传告警的上下文；由告警触发时写入，文件上传确认后清空。
 typedef struct {
 	char event_type[16];
 	char alarm_info[48];
@@ -44,7 +46,7 @@ static uint8_t g_UploadBuf[CAMPUS_HTTP_UPLOAD_CHUNK_SIZE];
 static char g_UploadUrl[CAMPUS_HTTP_PATH_MAX_LEN];
 static char g_SubPayload[RX_BUF_MAX_LEN];
 
-
+// 生成毫秒级时间戳文本；时间未同步时由Time模块给出兜底格式。
 static void Campus_BuildTimestamp(char *out, uint32_t outSize)
 {
 	if ((out == 0) || (outSize == 0U)) {
@@ -52,6 +54,8 @@ static void Campus_BuildTimestamp(char *out, uint32_t outSize)
 	}
 	(void)Time_GetTimestampMsText(out, outSize);
 }
+
+// 生成MQTT消息ID：优先使用真实时间戳，未校时时使用运行毫秒数。
 static void Campus_BuildMsgId(char *out, uint32_t outSize)
 {
 	char ts[24];
@@ -81,6 +85,7 @@ static void Campus_BuildMsgId(char *out, uint32_t outSize)
 	}
 }
 
+// 从简单JSON对象中读取字符串字段；当前协议字段不包含转义引号。
 static uint8_t Campus_JsonGetString(const char *json, const char *key, char *out, uint32_t outSize)
 {
 	char pattern[40];
@@ -114,6 +119,7 @@ static uint8_t Campus_JsonGetString(const char *json, const char *key, char *out
 	return 1;
 }
 
+// 从ESP8266的+MQTTSUBRECV原始回包里提取指定topic的payload。
 static uint8_t Campus_ExtractMqttSubPayload(const char *raw, const char *topic, char *out, uint32_t outSize)
 {
 	const char *p;
@@ -186,6 +192,7 @@ static uint8_t Campus_ExtractMqttSubPayload(const char *raw, const char *topic, 
 	return (copied != 0U) ? 1U : 0U;
 }
 
+// 发布MQTT时可能夹带订阅回包，这里先缓存起来，交给主循环统一处理。
 static void Campus_SaveSubRecvFromRaw(const char *raw)
 {
 	uint32_t oldLen;
@@ -209,6 +216,7 @@ static void Campus_SaveSubRecvFromRaw(const char *raw)
 	g_MqttSubRecvPending = 1U;
 }
 
+// 使用ESP8266的MQTTPUBRAW指令发送JSON，确保payload长度不受AT命令行限制。
 static bool Campus_MQTT_PublishJson(const char *topic, const char *payload)
 {
 	int written;
@@ -286,11 +294,14 @@ EXIT_PUBLISH:
 	g_ESP8266RawBusy = 0U;
 	return ok;
 }
+
+// MQTT连接成功后的入口，当前只发布一次上线状态。
 void Campus_MQTT_OnConnected(void)
 {
 	(void)Campus_MQTT_PublishOnline();
 }
 
+// 组装并发布设备在线状态，用于上线通知和周期心跳。
 bool Campus_MQTT_PublishOnline(void)
 {
 	char msgId[48];
@@ -307,6 +318,8 @@ bool Campus_MQTT_PublishOnline(void)
 
 	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_STATUS_ONLINE, g_PayloadBuf);
 }
+
+// 告警发生时先保存事件类型和文案，等待录音文件生成后再上报文件信息。
 bool Campus_MQTT_SetPendingAlarm(const char *eventType, const char *alarmInfo)
 {
 	if ((eventType == 0) || (alarmInfo == 0)) {
@@ -320,6 +333,7 @@ bool Campus_MQTT_SetPendingAlarm(const char *eventType, const char *alarmInfo)
 	return true;
 }
 
+// 上报告警录音文件元数据；后端收到后会通过订阅topic返回预签名上传URL。
 bool Campus_MQTT_PostAlarmForFile(const char *wavPath, uint32_t fileSize)
 {
 	char msgId[48];
@@ -370,6 +384,8 @@ bool Campus_MQTT_PostAlarmForFile(const char *wavPath, uint32_t fileSize)
 	printf("alarm/post ok\r\n");
 	return true;
 }
+
+// 在去重缓存中查找已处理或正在处理的上传指令。
 static CAMPUS_DEDUP_ENTRY *Campus_DedupFind(const char *mqttMsgId, const char *eventId)
 {
 	uint8_t i;
@@ -384,6 +400,7 @@ static CAMPUS_DEDUP_ENTRY *Campus_DedupFind(const char *mqttMsgId, const char *e
 	return 0;
 }
 
+// 记住一条上传指令；缓存满后按环形游标覆盖最旧槽位。
 static CAMPUS_DEDUP_ENTRY *Campus_DedupRemember(const char *mqttMsgId, const char *eventId, const char *objectKey)
 {
 	CAMPUS_DEDUP_ENTRY *entry;
@@ -408,6 +425,7 @@ static CAMPUS_DEDUP_ENTRY *Campus_DedupRemember(const char *mqttMsgId, const cha
 	return entry;
 }
 
+// 解析后端返回的HTTP上传URL，拆出主机、端口和请求路径。
 static uint8_t Campus_ParseHttpUrl(const char *url, const char *objectKey)
 {
 	const char *p;
@@ -468,6 +486,7 @@ static uint8_t Campus_ParseHttpUrl(const char *url, const char *objectKey)
 	return 1;
 }
 
+// 打印上传URL的关键字段，便于现场排查预签名URL是否完整。
 static void Campus_PrintUploadHeadInfo(const char *objectKey, uint32_t fileSize, int headLen)
 {
 	const char *query;
@@ -491,6 +510,7 @@ static void Campus_PrintUploadHeadInfo(const char *objectKey, uint32_t fileSize,
 		(strstr(g_UploadPath, "X-Amz-Signature=") != 0) ? 1U : 0U);
 }
 
+// 发送HTTP请求头后快速检查服务器是否提前返回错误。
 static uint8_t Campus_HttpHasEarlyError(void)
 {
 	strEsp8266_Fram_Record.Data_RX_BUF[strEsp8266_Fram_Record.InfBit.FramLength] = '\0';
@@ -503,6 +523,7 @@ static uint8_t Campus_HttpHasEarlyError(void)
 	return 0U;
 }
 
+// 进入ESP8266透传模式，按HTTP PUT格式把WAV文件分块上传到对象存储。
 static uint8_t Campus_HttpPutFileTransparent(FIL *fp, int headLen, uint32_t fileSize)
 {
 	FRESULT fr;
@@ -595,6 +616,7 @@ EXIT_TRANSPARENT:
 	return ok;
 }
 
+// 打开本地WAV文件，生成HTTP PUT请求头，并调用透传上传流程。
 static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char *objectKey)
 {
 	FIL fp;
@@ -662,6 +684,7 @@ static uint8_t Campus_HttpPutFile(const char *url, const char *path, const char 
 	return ok;
 }
 
+// 将本次上传结果通过MQTT回传给后端，后端据此标记告警附件状态。
 static bool Campus_MQTT_PublishConfirm(const char *eventId, const char *objectKey, uint8_t success)
 {
 	char msgId[48];
@@ -684,6 +707,7 @@ static bool Campus_MQTT_PublishConfirm(const char *eventId, const char *objectKe
 	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_ALARM_CONFIRM, g_PayloadBuf);
 }
 
+// 处理后端下发的上传指令：解析payload、去重、上传WAV、发送确认回执。
 void Campus_MQTT_ProcessSubRecv(void)
 {
 	char *json;
@@ -749,6 +773,7 @@ EXIT_PROCESS:
 	g_MqttSubRecvPending = 0U;
 }
 
+// 主循环周期调用：在MQTT空闲时按间隔发布在线心跳，失败后缩短重试周期。
 void Campus_MQTT_Service(uint32_t nowMs)
 {
 	static uint32_t s_nextOnlineMs = 0;

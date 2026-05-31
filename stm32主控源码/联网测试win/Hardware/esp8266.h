@@ -28,9 +28,9 @@
 
 /******************************* ESP8266 数据类型定义 ***************************/
 typedef enum{
-	STA,
-  AP,
-  STA_AP  
+	STA,		//作为客户端连接别人
+	AP,			//作为热点
+  STA_AP        //双模式
 } ENUM_Net_ModeTypeDef;
 
 
@@ -50,12 +50,14 @@ typedef enum{
 } ENUM_ID_NO_TypeDef;
 	
 
+
+//热点的wifi模式
 typedef enum{
-	OPEN = 0,
-	WEP = 1,
-	WPA_PSK = 2,
-	WPA2_PSK = 3,
-	WPA_WPA2_PSK = 4,
+	OPEN = 0,		//开放 WiFi，无密码开放 WiFi，无密码
+	WEP = 1,		//老式加密，基本不用
+	WPA_PSK = 2,	//WPA 加密
+	WPA2_PSK = 3,	//WPA2 加密，常用		
+	WPA_WPA2_PSK = 4,		//WPA/WPA2 混合模式
 } ENUM_AP_PsdMode_TypeDef;
 
 
@@ -63,20 +65,19 @@ typedef enum{
 /******************************* ESP8266 外部全局变量声明 ***************************/
 #define RX_BUF_MAX_LEN     1024                                     //最大接收缓存字节数
 
-extern struct  STRUCT_USARTx_Fram                                  //串口数据帧的处理结构体
-{
-	char  Data_RX_BUF [ RX_BUF_MAX_LEN ];
-	
-  union {
-    __IO u16 InfAll;
-    struct {
-		  __IO u16 FramLength       :15;                               // 14:0 
-		  __IO u16 FramFinishFlag   :1;                                // 15 
-	  } InfBit;
-  }; 
-	
-} strEsp8266_Fram_Record;
 
+extern struct STRUCT_USARTx_Fram		//串口数据帧的处理结构体
+{
+    char Data_RX_BUF[RX_BUF_MAX_LEN];
+
+    union {
+        __IO u16 InfAll;
+        struct {
+            __IO u16 FramLength     :15;		// 14:0
+            __IO u16 FramFinishFlag :1;			// 15
+        } InfBit;
+    };
+} strEsp8266_Fram_Record;
 
 
 /******************************** ESP8266 连接引脚定义 ***********************************/

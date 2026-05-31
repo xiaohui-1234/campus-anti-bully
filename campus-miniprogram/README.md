@@ -7,8 +7,8 @@
 编辑 `config/env.js`：
 
 ```js
-baseUrl: 'http://127.0.0.1:8080/api/v1'
-wsUrl: 'ws://127.0.0.1:8080/ws/v1/client'
+baseUrl: 'https://127.0.0.1:8080/api/v1'
+wsUrl: 'wss://127.0.0.1:8080/ws/v1/client'
 ```
 
 ## 约束

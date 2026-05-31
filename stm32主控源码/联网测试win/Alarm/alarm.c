@@ -38,60 +38,60 @@ void Alarm_Kill(void)
 
 void Alarm_Fight(void)
 {
-	Alarm_StartRecord("FIGHT", "fight");
+	Alarm_StartRecord("VOICE", "fight");
 }
 
 void Alarm_Kidnap(void)
 {
-	Alarm_StartRecord("HELP", "kidnap");
+	Alarm_StartRecord("VOICE", "kidnap");
 }
 
 void Alarm_Explosion(void)
 {
-	Alarm_StartRecord("HELP", "explosion");
+	Alarm_StartRecord("VOICE", "explosion");
 }
 
 void Alarm_Blood(void)
 {
-	Alarm_StartRecord("HELP", "blood");
+	Alarm_StartRecord("VOICE", "blood");
 }
 
 void Alarm_Faint(void)
 {
-	Alarm_StartRecord("HELP", "faint");
+	Alarm_StartRecord("VOICE", "faint");
 }
 
 void Alarm_StopHit(void)
 {
-	Alarm_StartRecord("HELP", "stop_hit");
+	Alarm_StartRecord("VOICE", "stop_hit");
 }
 
 void Alarm_Robbery(void)
 {
-	Alarm_StartRecord("HELP", "robbery");
+	Alarm_StartRecord("VOICE", "robbery");
 }
 
 void Alarm_HelpMe(void)
 {
-	Alarm_StartRecord("HELP", "help_me");
+	Alarm_StartRecord("VOICE", "help_me");
 }
 
 void Alarm_CallPeople(void)
 {
-	Alarm_StartRecord("HELP", "call_people");
+	Alarm_StartRecord("VOICE", "call_people");
 }
 
 void Alarm_GroupFight(void)
 {
-	Alarm_StartRecord("FIGHT", "group_fight");
+	Alarm_StartRecord("VOICE", "group_fight");
 }
 
 void Alarm_DontMove(void)
 {
-	Alarm_StartRecord("HELP", "dont_move");
+	Alarm_StartRecord("VOICE", "dont_move");
 }
 
 void General_alarm(void)
 {
-	Alarm_StartRecord("HELP", "general_alarm");
+	Alarm_StartRecord("VOICE", "general_alarm");
 }

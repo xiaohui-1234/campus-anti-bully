@@ -175,8 +175,10 @@ bool ESP8266_Send_Alarm_Time(void)
   * @param  无  * @retval 无  */
 void ESP8266_StaTcpClient ( void )
 {
+  /* 开始初始化 ESP8266 的 STA 联网流程。 */
   printf ( "\r\n Configuring TCP ESP8266 ......\r\n" );
 
+  /* 检测 AT 通信，切换到 STA 模式，并循环尝试连接 WiFi。 */
   ESP8266_AT_Test ();
   ESP8266_Net_Mode_Choose ( STA );
 
@@ -185,17 +187,22 @@ void ESP8266_StaTcpClient ( void )
     Delay_ms ( 2000 );
   }
 
+  /* WiFi 连接成功后同步网络时间，后续 MQTT 事件上报会使用该时间。 */
   ( void ) ESP8266_SyncTime ();
 
   printf ( "\r\n Configurating MQTT ESP8266 ......\r\n" );
 
+  /* 配置 MQTT 前先清理旧连接状态，避免残留会话影响本次连接。 */
   g_MqttConnected = 0;
   ( void ) ESP8266_Cmd ( "AT+MQTTCLEAN=0", "OK", "ERROR", 1000 );
   Delay_ms ( 1500 );
 
+  
+  
   {
     uint8_t mqttTry;
 
+    /* 配置 MQTT 用户信息，并等待 ESP8266 返回连接成功标志，最多重试 3 次。 */
     for ( mqttTry = 0; mqttTry < 3U; mqttTry++ )
     {
       if ( ! ESP8266_Cmd ( MQTT_USER, "OK", "ERROR", 3000 ) )
@@ -209,13 +216,18 @@ void ESP8266_StaTcpClient ( void )
     }
   }
 
+  
+  
   if ( ! g_MqttConnected )
     printf ( "MQTT conn fail\r\n" );
   else
   {
+    /* MQTT 连接成功后订阅服务端下发命令/告警相关主题。 */
     if ( ! ESP8266_Cmd ( MQTT_SUB_CMD, "OK", 0, 5000 ) )
       printf ( "MQTT sub alarm upload fail\r\n" );
     Delay_ms ( 300 );
+
+    /* 通知校园 MQTT 业务模块连接已建立，可开始发布在线状态等数据。 */
     Campus_MQTT_OnConnected();
   }
 }

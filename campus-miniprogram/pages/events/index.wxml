@@ -97,7 +97,7 @@
 
   <loading-view loading="{{loading}}" />
   <block wx:if="{{events.length}}">
-    <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" bind:open="openDetail" bind:play="playAudio" />
+    <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" audio-state="{{audioState}}" bind:open="openDetail" bind:play="playAudio" />
     <view wx:if="{{hasMore}}" class="button secondary load-more" bindtap="loadMore">加载更多</view>
   </block>
   <empty-state wx:elif="{{!loading}}" title="暂无事件" desc="可调整筛选条件后重试" />
@@ -105,10 +105,10 @@
   <popup-panel visible="{{detailVisible}}" bind:close="closeDetail">
     <view wx:if="{{currentEvent}}" class="detail">
       <view class="detail-handle"></view>
-      <view class="detail-title">{{currentEvent.event_type || currentEvent.eventType || '报警事件'}}</view>
+      <view class="detail-title">{{currentEvent.event_type_text || currentEvent.event_type || currentEvent.eventType || '报警事件'}}</view>
       <view class="detail-card">
         <view class="detail-line"><text>设备</text><text>{{currentEvent.device_id || currentEvent.deviceId}}</text></view>
-        <view class="detail-line"><text>信息</text><text>{{currentEvent.alarm_info || currentEvent.alarmInfo || '暂无'}}</text></view>
+        <view class="detail-line"><text>信息</text><text>{{currentEvent.alarm_info_text || currentEvent.alarm_info || currentEvent.alarmInfo || '暂无'}}</text></view>
         <view class="detail-line"><text>文件</text><text>{{currentEvent.file_status || currentEvent.fileStatus}}</text></view>
         <view class="detail-line"><text>时间</text><text>{{currentEvent.event_time || currentEvent.eventTime}}</text></view>
       </view>

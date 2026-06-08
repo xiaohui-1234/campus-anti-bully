@@ -1,6 +1,8 @@
 ﻿const deviceApi = require('../../services/device-api')
 const eventApi = require('../../services/event-api')
 const websocket = require('../../services/websocket')
+const audioPlayer = require('../../utils/audio-player')
+const eventLabels = require('../../utils/event-labels')
 
 Page({
   data: {
@@ -33,7 +35,12 @@ Page({
     startDate: '',
     startTime: '',
     endDate: '',
-    endTime: ''
+    endTime: '',
+    audioState: {
+      event_id: '',
+      playing: false,
+      progress: 0
+    }
   },
   onLoad(options) {
     getApp().setNavLayout(this)
@@ -48,6 +55,23 @@ Page({
     getApp().deferEnsureEventRealtime()
     getApp().refreshUnreadEventBadge()
     this.reload()
+  },
+  onHide() {
+    this.pendingAudioEventId = ''
+    audioPlayer.stop()
+  },
+  onUnload() {
+    this.pendingAudioEventId = ''
+    audioPlayer.stop()
+  },
+  updateAudioState(state) {
+    this.setData({
+      audioState: state || {
+        event_id: '',
+        playing: false,
+        progress: 0
+      }
+    })
   },
   async reload() {
     this.setData({ page: 1 })
@@ -65,7 +89,7 @@ Page({
         page: this.data.page,
         size: this.data.size
       }))
-      const records = data.records || []
+      const records = (data.records || []).map(eventLabels.formatEvent)
       const events = this.data.page === 1 ? records : this.data.events.concat(records)
       this.setData({
         events,
@@ -227,9 +251,31 @@ Page({
     const target = event && event.detail ? event.detail : this.data.currentEvent
     const eventId = target && (target.event_id || target.eventId)
     if (!eventId) return
-    const data = await eventApi.refreshUrl(eventId)
-    const audio = wx.createInnerAudioContext()
-    audio.src = data.file_url || data.fileUrl
-    audio.play()
+    if (audioPlayer.isPlaying(eventId)) {
+      audioPlayer.stop()
+      return
+    }
+    if (this.pendingAudioEventId === eventId) {
+      this.pendingAudioEventId = ''
+      this.updateAudioState()
+      return
+    }
+    audioPlayer.stop()
+    this.pendingAudioEventId = eventId
+    let data
+    try {
+      data = await eventApi.refreshUrl(eventId)
+    } catch (err) {
+      if (this.pendingAudioEventId === eventId) {
+        this.pendingAudioEventId = ''
+      }
+      throw err
+    }
+    if (this.pendingAudioEventId !== eventId) return
+    this.pendingAudioEventId = ''
+    audioPlayer.play(data.file_url || data.fileUrl, {
+      event_id: eventId,
+      onState: (state) => this.updateAudioState(state)
+    })
   }
 })

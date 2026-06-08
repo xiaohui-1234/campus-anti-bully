@@ -21,7 +21,7 @@ spring:
       max-request-size: 3MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://39.105.153.170/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: zhouyuhui
   data:
@@ -67,9 +67,9 @@ campus:
     access-key: "minioadmin"
     secret-key: "minioadmin123"
     bucket: "campus"
-    public-endpoint: "http://47.116.107.124:9000"
+    public-endpoint: "https://oss-shanghai.1314-520.xyz"
   cache:
-    mqtt-dedup-ttl-seconds: 86400
+    mqtt-dedup-ttl-seconds: 10
     device-online-ttl-seconds: 90
     bind-code-ttl-seconds: 60
     access-url-ttl-seconds: 3600

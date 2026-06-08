@@ -43,7 +43,7 @@ void Usart_SendArray( USART_TypeDef * pUSARTx, uint8_t *array, uint16_t num);
 #define  DEBUG_USARTx                   USART1
 #define  DEBUG_USART_CLK                RCC_APB2Periph_USART1
 #define  DEBUG_USART_APBxClkCmd         RCC_APB2PeriphClockCmd
-#define  DEBUG_USART_BAUDRATE           115200
+#define  DEBUG_USART_BAUDRATE           230400
 
 // USART GPIO 引脚宏定义
 #define  DEBUG_USART_GPIO_CLK           (RCC_APB2Periph_GPIOA)

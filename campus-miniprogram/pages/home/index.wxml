@@ -8,7 +8,7 @@
       <view class="page-title">今日守护</view>
       <view class="page-subtitle">实时同步已绑定设备的报警与在线状态</view>
     </view>
-    <view class="header-badge">在线 {{devices.length}}</view>
+    <view class="header-badge">在线 {{onlineTotal}}</view>
   </view>
 
   <view class="hero">
@@ -49,7 +49,7 @@
 
   <loading-view loading="{{loading}}" />
   <block wx:if="{{events.length}}">
-    <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" bind:open="openEvent" bind:play="playAudio" />
+    <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" audio-state="{{audioState}}" bind:open="openEvent" bind:play="playAudio" />
   </block>
   <empty-state wx:elif="{{!loading}}" title="暂无新事件" desc="已通过 HTTP 补拉和 WebSocket 同步" />
 </view>

@@ -15,6 +15,9 @@ FRESULT TF_Card_Mount(void);
 /* 卸载 TF 卡文件系统，成功或未挂载时返回 FR_OK。 */
 FRESULT TF_Card_Unmount(void);
 
+//软重启
+FRESULT TF_Card_Reset(void);
+
 /*
  * 向指定文件追加写入数据。
  * path    : FatFs 文件路径，例如 "0:/log.txt"。

@@ -4,7 +4,7 @@
       <view class="event-title-wrap">
         <view class="event-dot {{event.read_status === 'UNREAD' || event.readStatus === 'UNREAD' ? 'hot' : 'read'}}"></view>
         <view class="event-title-main">
-          <view class="event-type">{{event.event_type || event.eventType || '报警事件'}}</view>
+          <view class="event-type">{{event.event_type_text || event.event_type || event.eventType || '报警事件'}}</view>
           <view class="event-device">{{event.device_id || event.deviceId || '未知设备'}}</view>
         </view>
       </view>
@@ -13,7 +13,7 @@
       </view>
     </view>
 
-    <view class="event-info">{{event.alarm_info || event.alarmInfo || '暂无报警信息'}}</view>
+    <view class="event-info">{{event.alarm_info_text || event.alarm_info || event.alarmInfo || '暂无报警信息'}}</view>
 
     <view class="event-meta">
       <text class="file-status {{canPlay ? 'ready' : 'pending'}}">{{fileText}}</text>
@@ -22,9 +22,12 @@
   </view>
 
   <view class="event-actions">
-    <view class="play-button {{canPlay ? '' : 'disabled'}}" catchtap="handlePlay">
-      <view class="play-icon"></view>
-      <text>播放语音</text>
+    <view class="play-button {{canPlay ? '' : 'disabled'}} {{isPlaying ? 'playing' : ''}}" catchtap="handlePlay">
+      <view class="play-progress" style="{{progressStyle}}"></view>
+      <view class="play-content">
+        <view class="play-icon {{isPlaying ? 'pause' : ''}}"></view>
+        <text>{{playText}}</text>
+      </view>
     </view>
     <view class="detail-link" bindtap="handleTap">详情</view>
   </view>

@@ -28,9 +28,9 @@ uint8_t uart_index = 0;
 #define AUDIO_DMA_HALF_SIZE         (AUDIO_DMA_BUF_SIZE / 2)
 #define AUDIO_RECORD_SECONDS        15
 #define AUDIO_WAV_BYTES_TARGET      (AUDIO_SAMPLE_RATE_HZ * AUDIO_RECORD_SECONDS * 2U)
-#define OSS_HTTP_HOST               "test-record001.oss-cn-beijing.aliyuncs.com"
-#define OSS_HTTP_PORT               "80"
-#define OSS_OBJECT_PREFIX           "Record/Test/"
+#define OSS_HTTP_HOST               "47.116.107.124"
+#define OSS_HTTP_PORT               "9000"
+#define OSS_OBJECT_PREFIX           "record/test/"
 #define OSS_UPLOAD_CHUNK_SIZE       256U
 // 原宏是固定字符串，现在改成格式化模板，用%s作为upload_url的占位符
 #define UPLOAD_URL_TEMPLATE "AT+MQTTPUB=0,\"$sys/l4JQEioAnm/test1/thing/property/post\",\"{\\\"id\\\":\\\"123\\\"\\,\\\"params\\\":{\\\"audio_url\\\":{\\\"value\\\":\\\"http://%s/%s\\\"}}}\",0,0"

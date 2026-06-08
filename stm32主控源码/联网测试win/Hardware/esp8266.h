@@ -81,20 +81,24 @@ extern struct STRUCT_USARTx_Fram		//串口数据帧的处理结构体
 
 
 /******************************** ESP8266 连接引脚定义 ***********************************/
+//使能引脚定义
 #define      macESP8266_CH_PD_APBxClock_FUN                   RCC_APB2PeriphClockCmd
 #define      macESP8266_CH_PD_CLK                             RCC_APB2Periph_GPIOA  
 #define      macESP8266_CH_PD_PORT                            GPIOA
 #define      macESP8266_CH_PD_PIN                             GPIO_Pin_5
 
+//复位引脚定义
 #define      macESP8266_RST_APBxClock_FUN                     RCC_APB2PeriphClockCmd
 #define      macESP8266_RST_CLK                               RCC_APB2Periph_GPIOA
 #define      macESP8266_RST_PORT                              GPIOA
-#define      macESP8266_RST_PIN                               GPIO_Pin_6
+#define      macESP8266_RST_PIN                               GPIO_Pin_8
 
  
-
+//串口波特率
 #define      macESP8266_USART_BAUD_RATE                       115200
 
+
+//串口定义
 #define      macESP8266_USARTx                                USART2
 #define      macESP8266_USART_APBxClock_FUN                   RCC_APB1PeriphClockCmd
 #define      macESP8266_USART_CLK                             RCC_APB1Periph_USART2
@@ -117,8 +121,8 @@ extern struct STRUCT_USARTx_Fram		//串口数据帧的处理结构体
 #define     macESP8266_CH_ENABLE()                 ((void)0)
 #define     macESP8266_CH_DISABLE()                ((void)0)
 
-#define     macESP8266_RST_HIGH_LEVEL()            ((void)0)
-#define     macESP8266_RST_LOW_LEVEL()             ((void)0)
+#define     macESP8266_RST_HIGH_LEVEL()            GPIO_SetBits ( macESP8266_RST_PORT, macESP8266_RST_PIN )
+#define     macESP8266_RST_LOW_LEVEL()             GPIO_ResetBits ( macESP8266_RST_PORT, macESP8266_RST_PIN )
 
 
 
@@ -157,11 +161,18 @@ void                      ESP8266_Send_DivceID                   (void);
 //#define      macUser_ESP8266_TcpServer_Port               "8080"               //要连接的服务器的端口
 
 
+
+//在Hardware/campus_config.h中定义
+
 #define MQTT_USER             CAMPUS_MQTT_USER_CMD
 #define MQTT_CONN_CMD         CAMPUS_MQTT_CONN_CMD
 #define MQTT_SUB_CMD          CAMPUS_MQTT_SUB_UPLOAD_CMD
+
+
 //开启net时间
 #define NTP_CONFIG_CMD CAMPUS_NTP_CONFIG_CMD
+
+
 //返回当前时间
 #define NTP_GET_TIME_CMD CAMPUS_NTP_GET_TIME_CMD
 

@@ -674,6 +674,16 @@
               <FileType>5</FileType>
               <FilePath>.\System\bsp_timer.h</FilePath>
             </File>
+            <File>
+              <FileName>bsp_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\bsp_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gpio.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\bsp_gpio.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

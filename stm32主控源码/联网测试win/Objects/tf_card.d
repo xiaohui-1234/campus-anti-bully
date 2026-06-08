@@ -33,3 +33,4 @@
 .\objects\tf_card.o: .\ff.h
 .\objects\tf_card.o: .\ffconf.h
 .\objects\tf_card.o: .\diskio.h
+.\objects\tf_card.o: Hardware\sd_spi.h

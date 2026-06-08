@@ -23,6 +23,7 @@ uint8_t g_PassthroughMode = 0;
 char uart_buffer[20];
 uint8_t uart_index = 0;
 
+
 #define AUDIO_SAMPLE_RATE_HZ        8000U
 #define AUDIO_DMA_BUF_SIZE          800U
 #define AUDIO_DMA_HALF_SIZE         (AUDIO_DMA_BUF_SIZE / 2U)
@@ -157,14 +158,14 @@ static void Wav_Start(void)
         return;
     }
     printf("TF mounted\r\n");
-
+	
     fr = FR_INVALID_NAME;
     for (tryCount = 0; tryCount < 10U; tryCount++) {
         if (!Time_GenerateRecordPath(g_WavPath, sizeof(g_WavPath))) {
             printf("WAV path gen fail\r\n");
             return;
         }
-
+		
         fr = f_open(&g_WavFile, g_WavPath, FA_CREATE_NEW | FA_WRITE);
         if (fr == FR_OK) {
             break;
@@ -398,6 +399,9 @@ void Get_STM32_UID(char *uid_str)
     sprintf(uid_str, "%08lX%08lX%08lX", uid[0], uid[1], uid[2]);
 }
 
+
+
+
 int main(void)
 {
     char uid_str[25];
@@ -415,6 +419,8 @@ int main(void)
     Get_STM32_UID(uid_str);
     printf("USART1 OK\r\n");
     printf("STM32 UID: %s\r\n", uid_str);
+	
+	printf("TF Mount fr=%d\r\n",(int)TF_Card_Reset());
 
     // 3. 初始化ESP8266，并尝试接入WiFi、建立MQTT连接。
     ESP8266_Init();						 //设置通信串口 初始化WiFi模块使用的接口和外设 PA2  PA3 115200  
@@ -439,21 +445,25 @@ int main(void)
             Alarm_ButtomDown(key);
         }
 
+		
+		
         // 7. 只有在非AT穿透模式下，才运行本机业务逻辑。
         if (g_PassthroughMode == 0U) {		//在没有进入穿透模式下
 			
 			// 8. 处理语音模块串口输入，按命令编号触发不同告警类型。
             if (USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == SET) {
                 uint8_t data;
-
                 data = (uint8_t)USART_ReceiveData(USART3);
+				
                 if (App_IsRecording()) {
                     uart_index = 0;
-                } else if (data == '\r' || data == '\n') {
+                } 
+				else if (data == '\r' || data == '\n') {
+					
                     if (uart_index > 0U) {
                         uart_buffer[uart_index] = '\0';
-                        printf("Received command: %s\r\n", uart_buffer);
-
+                        printf("Received command: %s\r\n The size of uart_buffer is %d\r\n", uart_buffer, strlen(uart_buffer));
+						
                         if (strcmp(uart_buffer, "1") == 0) LED0_ON();
                         else if (strcmp(uart_buffer, "2") == 0) LED0_OFF();
                         else if (strcmp(uart_buffer, "3") == 0) Alarm_Voice();
@@ -474,6 +484,7 @@ int main(void)
 
                         uart_index = 0;
                     }
+					
                 } else {
                     if (uart_index < (sizeof(uart_buffer) - 1U)) {
                         uart_buffer[uart_index++] = (char)data;
@@ -482,7 +493,9 @@ int main(void)
                     }
                 }
             }
-
+			
+			
+			
             // 9. 非录音期间处理远程控制、MQTT订阅消息、MQTT保活重连和NTP校时。
             if (!App_IsRecording()) {
                 switch (flag) {

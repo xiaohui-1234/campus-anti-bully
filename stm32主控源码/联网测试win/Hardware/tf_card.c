@@ -1,6 +1,7 @@
 #include "tf_card.h"
 
 #include "diskio.h"
+#include "sd_spi.h"
 
 /* FatFs 文件系统对象，只在本模块内部维护。 */
 static FATFS s_fs;
@@ -48,6 +49,26 @@ FRESULT TF_Card_Unmount(void)
 		return FR_OK;
 	}
 	return fr;
+}
+
+
+
+FRESULT TF_Card_Reset(void)
+{
+	FRESULT fr;
+	SD_SPI_Status sd_status;
+
+	fr = TF_Card_Unmount();
+	if (fr != FR_OK) {
+		return fr;
+	}
+
+	sd_status = SD_SPI_Init();
+	if (sd_status != SD_SPI_OK) {
+		return FR_DISK_ERR;
+	}
+
+	return TF_Card_Mount();
 }
 
 /*

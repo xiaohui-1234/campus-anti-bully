@@ -33,13 +33,18 @@ static char g_MqttTimeStrBuf[32] = { 0 };
 
 char cStr [ 1500 ] = { 0 };
 
-//static void                   ESP8266_GPIO_Config                 ( void );
+
+static void                   ESP8266_Rst                         ( void );
+static void                   ESP8266_GPIO_Config                 ( void );
 static void                   ESP8266_USART_Config                ( void );
 static void                   ESP8266_USART_NVIC_Configuration    ( void );
 static void                   ESP8266_SendRawBytes                ( const uint8_t * pBuf, u32 ulLength );
 static uint8_t                ESP8266_WaitRxQuiet                 ( u32 quiettime, u32 waittime );
 static bool                   ESP8266_MQTTConnectReady            ( u32 waittime );
 struct  STRUCT_USARTx_Fram strEsp8266_Fram_Record = { 0 };
+
+
+
 
 /**
   * @brief  ESP8266英文月份转数字月份  * @param  month_str 英文月份字符串  * @retval 数字月份
@@ -246,8 +251,30 @@ void ESP8266_StaTcpClient ( void )
   */
 void ESP8266_Init ( void )
 {
-  ESP8266_USART_Config ();
+	//新增GPIO硬复位---->PXx
+	ESP8266_GPIO_Config ();
+	ESP8266_Rst();
+	printf("Esp8266 has reset\n\r");
+	ESP8266_USART_Config ();
 }
+
+
+//配置reset引脚
+static void ESP8266_GPIO_Config ( void )
+{	
+	
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	macESP8266_RST_APBxClock_FUN ( macESP8266_RST_CLK, ENABLE );
+
+	GPIO_InitStructure.GPIO_Pin = macESP8266_RST_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init ( macESP8266_RST_PORT, &GPIO_InitStructure );
+
+	macESP8266_RST_HIGH_LEVEL();
+}
+
 static void ESP8266_USART_Config ( void )
 {
 	GPIO_InitTypeDef GPIO_InitStructure;

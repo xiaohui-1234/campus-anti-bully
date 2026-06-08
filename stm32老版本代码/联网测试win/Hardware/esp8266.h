@@ -146,8 +146,8 @@ void                       ESP8266_Get_RealTime                (char *time_str);
 bool                      ESP8266_Send_Alarm_Time               (void);
 void                      ESP8266_Send_DivceID                   (void);
 /********************************** 用户需要设置的参数**********************************/
-#define      macUser_ESP8266_ApSsid                       "HiwonderESP"                //要连接的热点的名称"HiwonderESP"
-#define      macUser_ESP8266_ApPwd                        "hiwonder"           //要连接的热点的密钥"hiwonder"
+#define      macUser_ESP8266_ApSsid                       "xiaohui"                //要连接的热点的名称"HiwonderESP"
+#define      macUser_ESP8266_ApPwd                        "1122334455"           //要连接的热点的密钥"hiwonder"
 
 //#define      macUser_ESP8266_TcpServer_IP                 "192.168.0.11"      //要连接的服务器的 IP
 //#define      macUser_ESP8266_TcpServer_Port               "8080"               //要连接的服务器的端口

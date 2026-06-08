@@ -1,0 +1,38 @@
+{
+  "lazyCodeLoading": "requiredComponents",
+  "pages": [
+    
+    "pages/login/login",
+    "pages/index/index",
+    "pages/profile/profile",
+    "pages/setting/setting",
+    "pages/service/service",
+    "components/navigation-bar"
+  
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationStyle": "default",
+    "navigationBarTitleText": "校园欺凌实时监测系统",
+    "navigationBarBackgroundColor": "#ffffff",
+    "enablePullDownRefresh": true
+  },
+  "tabBar": {
+    "borderStyle": "white",
+    "selectedColor": "#1296db",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "消息",
+        "iconPath": "/images/消息1.png",
+        "selectedIconPath": "/images/消息2.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "/images/我的1.png",
+        "selectedIconPath": "/images/我的2.png"
+      }
+    ]
+  }
+}

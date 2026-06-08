@@ -1,0 +1,14 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <view class="userbox" bind:tap="toPersonDetail">
+    <image class="pic" src="{{avatar}}" mode="aspectFill"></image>
+    <view class="usercenter">
+      <view class="title">{{nickname}}</view>
+    </view>
+  </view>
+    
+  <view class="service" bind:tap="toSetting">
+    <image src="/images/icon-setting.png" class="passed"></image>
+    <view class="dec">设置设备地点</view>
+  </view>
+</view>

@@ -1,5 +1,0 @@
-<view wx:if="{{visible}}" class="mask" bindtap="close">
-  <view class="popup" catchtap="noop">
-    <slot></slot>
-  </view>
-</view>

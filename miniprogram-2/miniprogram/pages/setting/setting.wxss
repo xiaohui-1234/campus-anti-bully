@@ -1,0 +1,32 @@
+/* pages/setting/setting.wxss */
+.form-container {
+  padding: 20rpx;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+  border-bottom: 1rpx solid #eee;
+  padding-bottom: 10rpx;
+}
+
+.form-label {
+  width: 150rpx;
+  font-size: 32rpx;
+  color: #333;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 30rpx;
+  color: #666;
+  padding: 10rpx 0;
+}
+
+.submit-btn {
+  margin-top: 50rpx;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 8rpx;
+}

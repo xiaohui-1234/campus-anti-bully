@@ -1,0 +1,46 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+  <view class="header">
+    <view class="titel">欢迎登录</view>
+    <view class="sub-title">点击下方按钮后，完善头像和微信名称即可完成登录</view>
+  </view>
+
+  <view class="wechat-login wechat-login-active" bind:tap="openProfileModal">
+    <image class="wechat-icon" src="/images/微信.png" mode=""/>
+    <view class="wechat-text">微信一键登录</view>
+  </view>
+
+  <view wx:if="{{showProfileModal}}" class="modal-mask" catchtap="closeProfileModal">
+    <view class="modal-panel" catchtap="noop">
+      <view class="modal-title">完善登录资料</view>
+      <view class="modal-subtitle">请选择头像并填写微信名称，确认后完成登录</view>
+
+      <view class="step-title">头像</view>
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="avatar-image" src="{{avatar}}" mode="aspectFill" />
+      </button>
+      <view class="avatar-tip">点击头像选择你的微信头像</view>
+
+      <view class="step-title nickname-title">微信名称</view>
+      <input class="nickname-input" type="nickname" placeholder="请输入微信名称" value="{{nickname}}" bind:input="onNicknameInput" />
+      <view class="nickname-tip">支持使用微信昵称快捷填写</view>
+
+      <view class="submit-tip">{{canSubmit ? '资料已准备完成，可以确认登录' : '请先完成头像与微信名称填写'}}</view>
+
+      <view class="modal-actions">
+        <view class="modal-btn modal-btn-cancel" bind:tap="closeProfileModal">取消</view>
+        <view class="modal-btn modal-btn-confirm {{canSubmit ? 'modal-btn-confirm-active' : 'modal-btn-confirm-disabled'}}" bind:tap="wechatLogin">
+          {{submitting ? '登录中...' : '确定登录'}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer">
+    <text class="footer-text">登录即表示同意</text>
+    <text class="footer-link">《用户协议》</text>
+    <text class="footer-text">和</text>
+    <text class="footer-link">《隐私政策》</text>
+  </view>
+</view>

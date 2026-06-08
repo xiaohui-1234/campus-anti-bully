@@ -1,0 +1,252 @@
+/* pages/login/login.wxss */
+.login-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 60rpx;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  box-sizing: border-box;
+}
+
+.header {
+  width: 100%;
+  max-width: 680rpx;
+  margin-bottom: 36rpx;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 680rpx;
+  padding: 48rpx 40rpx;
+  box-sizing: border-box;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20rpx 60rpx rgba(31, 50, 81, 0.12);
+}
+
+.login-desc {
+  text-align: center;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #6b7280;
+  margin-bottom: 40rpx;
+}
+
+.titel {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #262424;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.sub-title {
+  font-size: 28rpx;
+  color: #666262;
+  text-align: center;
+}
+
+.step-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2f3a4a;
+  margin-bottom: 24rpx;
+  text-align: left;
+}
+
+.nickname-title {
+  margin-top: 36rpx;
+}
+
+.avatar-picker {
+  width: 180rpx;
+  height: 180rpx;
+  padding: 0;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+}
+
+.avatar-picker::after {
+  border: none;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 4rpx solid rgba(7, 193, 96, 0.12);
+}
+
+.avatar-tip,
+.nickname-tip,
+.submit-tip {
+  text-align: center;
+  font-size: 24rpx;
+}
+
+.avatar-tip,
+.nickname-tip {
+  color: #7b8794;
+  margin-top: 18rpx;
+}
+
+.nickname-input {
+  width: 100%;
+  height: 96rpx;
+  margin-bottom: 18rpx;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  color: #333333;
+  border: 2rpx solid #e8edf3;
+}
+
+.submit-tip {
+  margin: 36rpx 0 24rpx;
+  color: #07C160;
+}
+
+.modal-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 680rpx;
+  padding: 48rpx 40rpx;
+  box-sizing: border-box;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 24rpx 80rpx rgba(15, 23, 42, 0.2);
+}
+
+.modal-title {
+  text-align: center;
+  font-size: 38rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-subtitle {
+  margin: 20rpx 0 36rpx;
+  text-align: center;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #6b7280;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.modal-btn-cancel {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.modal-btn-confirm {
+  color: #ffffff;
+  background: #07C160;
+}
+
+.modal-btn-confirm-active {
+  opacity: 1;
+}
+
+.modal-btn-confirm-disabled {
+  opacity: 0.55;
+}
+
+.wechat-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #07C160;
+  width: 100%;
+  padding: 30rpx;
+  box-sizing: border-box;
+  border-radius: 999rpx;
+  box-shadow: 0 10rpx 30rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.wechat-login-active {
+  opacity: 1;
+}
+
+.wechat-login-disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.wechat-login:hover {
+  transform: translateY(-5rpx);
+  box-shadow: 0 15rpx 40rpx rgba(7, 193, 96, 0.4);
+}
+
+.wechat-icon {
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: 20rpx;
+  filter: brightness(0) invert(1);
+}
+
+.wechat-text {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: white;
+}
+
+.footer {
+  position: absolute;
+  bottom: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 24rpx;
+  color: #999393;
+}
+
+.footer-link {
+  color: #07C160;
+  margin: 0 10rpx;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}

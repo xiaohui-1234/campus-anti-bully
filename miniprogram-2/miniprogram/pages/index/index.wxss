@@ -1,0 +1,117 @@
+/**index.wxss**/
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+}
+
+/* 订阅开关区域（已注释） */
+/*
+.subscribe-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 30rpx 10rpx;
+  background-color: white;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.subscribe-label {
+  font-size: 32rpx;
+  color: #333;
+}
+
+.subscribe-switch {
+  transform: scale(1.2);
+}
+*/
+
+/* 列表容器 */
+.card-list {
+  padding: 20rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  background-color: #f5f5f5;
+}
+
+/* 卡片样式 */
+.card {
+  width: 100%;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+/* 卡片内每一项 */
+.card-item {
+  display: flex;
+  margin-bottom: 16rpx;
+  align-items: flex-start;
+}
+
+/* 描述项单独样式（换行显示） */
+.card-item.desc {
+  flex-direction: column;
+}
+
+/* 标签样式 */
+.label {
+  font-size: 28rpx;
+  color: #666;
+  min-width: 120rpx;
+}
+
+/* 数值样式 */
+.value {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+/* 事件类型特殊样式 */
+.event-type {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+}
+
+/* 不同事件类型的颜色区分 */
+.event-type.warning {
+  color: #ff9500;
+  background-color: #fff7e8;
+}
+.event-type.error {
+  color: #ff3b30;
+  background-color: #ffebe8;
+}
+.event-type.normal {
+  color: #007aff;
+  background-color: #e8f0fe;
+}
+
+/* 回放按钮 */
+.playback-btn {
+  margin-top: 20rpx;
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background-color: #007aff;
+  color: #fff;
+  border-radius: 8rpx;
+  font-size: 30rpx;
+}
+
+/* 暂无录音提示 */
+.no-audio {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+}

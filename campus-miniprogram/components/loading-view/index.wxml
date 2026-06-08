@@ -1,3 +1,0 @@
-<view class="loading-slot">
-  <view class="loading {{loading ? 'is-visible' : ''}}">加载中...</view>
-</view>

@@ -1,0 +1,34 @@
+<!--index.wxml-->
+<!-- 卡片列表容器 -->
+<view class="card-list">
+  <!-- wx:for循环渲染卡片 -->
+  <view class="card" wx:for="{{cardList}}" wx:key="id">
+    <!-- 设备名称 -->
+    <view class="card-item">
+      <text class="label">设备地点：</text>
+      <text class="value">{{item.deviceName}}</text>
+    </view>
+    <!-- 时间 -->
+    <view class="card-item">
+      <text class="label">发生时间：</text>
+      <text class="value">{{item.time}}</text>
+    </view>
+    <!-- 事件类型 -->
+    <view class="card-item">
+      <text class="label">事件类型：</text>
+      <text class="value event-type {{item.eventTypeClass}}">{{item.eventType}}</text>
+    </view>
+    <!-- 描述 -->
+    <view class="card-item desc">
+      <text class="label">事件描述：</text>
+      <text class="value">{{item.desc}}</text>
+    </view>
+    <!-- 回放按钮 -->
+    <button class="playback-btn" bindtap="handlePlayback" data-id="{{item._id}}" wx:if="{{item.audioUrl}}">
+      回放录音
+    </button>
+    <view class="no-audio" wx:else>
+      暂无录音
+    </view>
+  </view>
+</view>

@@ -1,0 +1,63 @@
+/* pages/profile/profile.wxss */
+page {
+  background-color: #f8f9fa;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.container{
+  margin:20rpx 20rpx 0;
+}
+.userbox{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+}
+.pic{
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: 50%;
+}
+.usercenter{
+  flex: 1px;
+  margin-left: 20rpx;
+  margin-right: 20rpx;
+}
+.title{
+  font-size: 35rpx;
+  font-weight: 600;
+  color: #333333;
+}
+.person_text{
+  padding-top: 10rpx;
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #999999;
+}
+.arrow{
+  width: 30rpx;
+  height: 30rpx;
+}
+/* 2 */
+.passed{
+  width: 50rpx;
+  height: 50rpx;
+}
+.service{
+  margin-top: 20rpx;
+  padding: 20rpx;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 20rpx;
+}
+.dec{
+  padding-left: 20rpx;
+  font-size: 40rpx;
+  font-weight: 400;
+  color: #333333;
+}

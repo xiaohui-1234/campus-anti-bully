@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "openapi": [
+      "wx.login"
+    ],
+    "db": [
+      {
+        "collection": "login",
+        "permission": "read_write"
+      }
+    ]
+  }
+}

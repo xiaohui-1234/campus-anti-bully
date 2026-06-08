@@ -1,9 +1,0 @@
-{
-  "navigationBarTitleText": "校园防霸凌",
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "event-card": "../../components/event-card/index",
-    "empty-state": "../../components/empty-state/index",
-    "loading-view": "../../components/loading-view/index"
-  }
-}

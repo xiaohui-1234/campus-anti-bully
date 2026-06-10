@@ -109,3 +109,15 @@ export function updateConfig(data) {
 export function getSystemInfo() {
   return api.get('/system/info')
 }
+
+export function getDevices(params) {
+  return api.get('/devices', { params })
+}
+
+export function createDevice(data) {
+  return api.post('/devices', data)
+}
+
+export function deleteDevice(deviceId) {
+  return api.delete(`/devices/${encodeURIComponent(deviceId)}`)
+}

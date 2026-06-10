@@ -21,6 +21,12 @@ mvn clean package
 mvn spring-boot:run
 ```
 
+也可以使用打包后的可执行 Jar 启动：
+
+```bash
+java -jar target/campus-server-1.0.0.jar
+```
+
 默认端口为 `8080`，Swagger UI 默认开启：
 
 ```text
@@ -69,4 +75,7 @@ mvn spring-boot:run
 - 设备绑定、设备查询、事件查询、事件删除、标记已读和刷新文件 URL 均校验当前用户是否绑定设备。
 - MQTT 入口按 `Receiver -> Router -> DedupService -> Queue -> Handler -> Publisher` 处理。
 - MQTT 去重使用 Redis `mqtt:dedup:{device_id}:{mqtt_msg_id}`，数据库再用 `event(device_table_id, mqtt_msg_id)` 兜底。
+- 后端启动后会以 `campus.mqtt.client-id` 连接 EMQX，默认客户端 ID 为 `campus-server`。EMQX 客户端列表中看到 `campus-server` 在线是正常现象。
+- 同一 MQTT `client_id` 同一时间只能有一个在线连接。本地或服务器上重复启动启用 MQTT 的后端实例时，会互相顶掉连接，并反复出现 `MQTT connection lost`、`MqttException: 已断开连接`、`EOFException` 日志。
+- 当前后端未使用 MQTT shared subscription，多实例同时启用 MQTT 会导致设备上报消息被多个实例消费，生产和联调默认只保留一个 `campus.mqtt.enabled=true` 的后端实例。
 - WebSocket 单连接订阅多个设备，订阅时校验设备绑定关系。

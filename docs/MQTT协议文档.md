@@ -2,6 +2,30 @@
 
 MQTT 用于 STM32/ESP8266 设备与后端之间的报警、上传指令、在线状态、绑定码和 WiFi 配置同步。当前后端使用 Eclipse Paho 客户端，QoS 由 `campus.mqtt.qos` 配置，默认按 QoS 1 使用。
 
+## 后端 MQTT 客户端
+
+后端启动后，`MqttReceiver` 会使用 `campus.mqtt.client-id` 主动连接 EMQX/Broker。当前默认值为：
+
+```text
+campus-server
+```
+
+因此在 EMQX 控制台的“客户端”页面看到 `campus-server` 在线是正常现象，它表示 Spring Boot 后端正在作为 MQTT 客户端接收设备消息。当前连接参数为：
+
+- `clean_session=true`
+- `automatic_reconnect=true`
+- 启动后订阅 `device/+/+/alarm/post`、`alarm/confirm`、`bind`、`status/online`、`config/wifi/set/reply`、`config/wifi/list`
+
+MQTT 同一个 `client_id` 同一时间只能有一个在线连接。如果本机或服务器上同时启动两个后端实例，并且都使用 `campus-server` 作为 `client_id`，后连接的实例会把前一个实例顶下线。典型日志如下：
+
+```text
+MQTT connection lost
+org.eclipse.paho.client.mqttv3.MqttException: 已断开连接
+Caused by: java.io.EOFException
+```
+
+本地开发时应只保留一个启用 MQTT 的后端进程。若需要同时启动多个后端实例，建议只让一个实例设置 `campus.mqtt.enabled=true`；其他实例设置为 `false`。当前后端没有使用 MQTT shared subscription，多实例同时订阅同一通配 topic 会导致每个实例都收到设备消息，可能造成重复处理。
+
 ## Topic 规范
 
 统一格式：

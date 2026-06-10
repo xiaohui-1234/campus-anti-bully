@@ -14,12 +14,15 @@ import com.campus.module.device.entity.UserDeviceBind;
 import com.campus.module.device.mapper.DeviceMapper;
 import com.campus.module.device.mapper.UserDeviceBindMapper;
 import com.campus.module.device.vo.DeviceVO;
+import com.campus.module.websocket.session.WebSocketSessionManager;
 import com.campus.security.LoginUser;
 import com.campus.security.SecurityContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -42,6 +45,7 @@ public class DeviceService {
     private final UserDeviceBindMapper bindMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final CampusProperties properties;
+    private final WebSocketSessionManager webSocketSessionManager;
 
     public PageResult<DeviceVO> listMine(long page, long size) {
         LoginUser loginUser = SecurityContextUtil.currentUser();
@@ -108,6 +112,7 @@ public class DeviceService {
         Device device = findByDeviceId(deviceId);
         UserDeviceBind bind = ensureUserBoundDevice(loginUser.getUserTableId(), device.getId());
         bindMapper.deleteById(bind.getId());
+        closeUserSessionsAfterCommit(loginUser.getUserId());
         log.info("Device unbind success, user_id={}, device_id={}", loginUser.getUserId(), deviceId);
     }
 
@@ -212,6 +217,20 @@ public class DeviceService {
 
     private boolean contains(String value, String keyword) {
         return value != null && value.toLowerCase().contains(keyword);
+    }
+
+    private void closeUserSessionsAfterCommit(String userId) {
+        Runnable closeSessions = () -> webSocketSessionManager.closeUserSessions(userId);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            closeSessions.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                closeSessions.run();
+            }
+        });
     }
 
     private long safePage(long page) {

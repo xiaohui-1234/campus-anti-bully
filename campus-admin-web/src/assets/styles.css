@@ -5,7 +5,7 @@
 body {
   margin: 0;
   min-width: 1120px;
-  background: #f4f6f9;
+  background: #f5f7f9;
   color: #1f2937;
   font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
@@ -14,19 +14,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  gap: 24px;
+  margin-bottom: 22px;
 }
 
 .page-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #111827;
 }
 
 .page-subtitle {
-  margin-top: 6px;
+  margin-top: 7px;
   color: #667085;
   font-size: 13px;
+  line-height: 1.6;
 }
 
 .grid {
@@ -36,21 +38,118 @@ body {
 }
 
 .metric {
-  min-height: 108px;
+  position: relative;
+  min-height: 126px;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.metric:hover {
+  border-color: #cddfdc;
+  box-shadow: 0 8px 22px rgba(24, 55, 50, 0.06);
+  transform: translateY(-1px);
 }
 
 .metric-label {
   color: #667085;
   font-size: 13px;
+  font-weight: 600;
 }
 
 .metric-value {
-  margin-top: 12px;
-  font-size: 28px;
+  margin-top: 14px;
+  font-size: 30px;
   font-weight: 800;
   color: #111827;
 }
 
 .form-card {
-  max-width: 860px;
+  max-width: 920px;
+  border-radius: 8px;
+}
+
+.section-card {
+  border-radius: 8px;
+}
+
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-heading > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.card-heading strong {
+  color: #344054;
+  font-size: 15px;
+}
+
+.card-heading span {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.metric-icon {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+  background: #edf7f5;
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.config-form {
+  max-width: 720px;
+  padding: 4px 2px 2px;
+}
+
+.config-form .el-form-item {
+  margin-bottom: 24px;
+}
+
+.field-unit {
+  margin-left: 10px;
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.field-note {
+  margin-top: 7px;
+  color: #98a2b3;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.el-card {
+  border-color: #e5e9ed;
+}
+
+.el-button {
+  font-weight: 600;
+}
+
+.el-descriptions {
+  --el-descriptions-table-border: 1px solid #e8ebef;
+}
+
+.el-descriptions__label.el-descriptions__cell.is-bordered-label {
+  color: #667085;
+  font-weight: 600;
+  background: #fafbfc;
+}
+
+.el-dialog {
+  border-radius: 8px;
 }

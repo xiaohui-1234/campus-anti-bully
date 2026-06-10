@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -35,6 +36,7 @@ public class EventWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        sessionManager.markAlive(session);
         WebSocketClientMessage clientMessage = objectMapper.readValue(message.getPayload(), WebSocketClientMessage.class);
         if ("PING".equals(clientMessage.getType())) {
             send(session, Map.of("type", "PONG", "timestamp", clientMessage.getTimestamp()));
@@ -52,6 +54,11 @@ public class EventWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
+    protected void handlePongMessage(WebSocketSession session, PongMessage message) {
+        sessionManager.markAlive(session);
+    }
+
+    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessionManager.remove(session);
     }
@@ -59,6 +66,7 @@ public class EventWebSocketHandler extends TextWebSocketHandler {
     private void handleSubscribe(WebSocketSession session, List<String> requestedDeviceIds) throws Exception {
         LoginUser loginUser = loginUser(session);
         if (requestedDeviceIds == null || requestedDeviceIds.isEmpty()) {
+            sessionManager.subscribe(session.getId(), List.of());
             send(session, Map.of("type", "SUBSCRIBE_EVENTS_ACK", "success", true, "data", Map.of("device_ids", List.of())));
             return;
         }
@@ -88,8 +96,10 @@ public class EventWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void send(WebSocketSession session, Object payload) throws Exception {
-        if (session.isOpen()) {
-            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(payload)));
+        synchronized (session) {
+            if (session.isOpen()) {
+                session.sendMessage(new TextMessage(objectMapper.writeValueAsString(payload)));
+            }
         }
     }
 }

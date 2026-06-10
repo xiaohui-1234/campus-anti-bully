@@ -10,15 +10,15 @@
         </div>
         <div class="guard-list">
           <div class="guard-item">
-            <span class="guard-dot"></span>
+            <el-icon><UserFilled /></el-icon>
             <span>仅允许 ADMIN 用户通过 openid 登录</span>
           </div>
           <div class="guard-item">
-            <span class="guard-dot"></span>
+            <el-icon><Key /></el-icon>
             <span>登录后自动签发 access token 与 refresh token</span>
           </div>
           <div class="guard-item">
-            <span class="guard-dot"></span>
+            <el-icon><Lock /></el-icon>
             <span>后台接口统一走 Bearer Token 鉴权</span>
           </div>
         </div>
@@ -39,6 +39,7 @@
           size="large"
           placeholder="请输入管理员 openid"
           clearable
+          :prefix-icon="Key"
           @keyup.enter="submit"
         />
         <div class="field-help">openid 只用于本次登录校验，服务端按哈希匹配管理员账号。</div>
@@ -55,6 +56,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Key, Lock, UserFilled } from '@element-plus/icons-vue'
 import { loginByOpenid } from '../services/api'
 
 const openid = ref('')
@@ -83,9 +85,7 @@ async function submit() {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(15, 139, 141, 0.06), rgba(245, 247, 250, 0) 42%),
-    #f5f7fa;
+  background: #f4f7f7;
   color: #17212b;
   box-sizing: border-box;
   padding: 56px 24px;
@@ -106,6 +106,7 @@ async function submit() {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: 24px 0;
 }
 
 .brand-mark {
@@ -159,12 +160,12 @@ p {
   font-size: 14px;
 }
 
-.guard-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #0f8b8d;
-  box-shadow: 0 0 0 5px rgba(15, 139, 141, 0.1);
+.guard-item .el-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: #e6f3f1;
+  color: #0f766e;
   flex: 0 0 auto;
 }
 
@@ -231,7 +232,7 @@ p {
   position: relative;
   overflow: hidden;
   border: 0;
-  background: linear-gradient(135deg, #0f8b8d 0%, #12a173 100%);
+  background: #0f766e;
   box-shadow: 0 14px 28px rgba(15, 139, 141, 0.24);
   transition:
     transform 0.18s ease,
@@ -239,26 +240,10 @@ p {
     filter 0.18s ease;
 }
 
-.login-button::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 70%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-  transform: skewX(-22deg);
-  transition: left 0.42s ease;
-}
-
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 36px rgba(15, 139, 141, 0.3);
-  filter: saturate(1.04);
-}
-
-.login-button:hover::before {
-  left: 130%;
+  background: #0d6d65;
+  box-shadow: 0 18px 36px rgba(15, 118, 110, 0.25);
 }
 
 .login-button:active {
@@ -274,7 +259,6 @@ p {
 .login-button.is-loading {
   transform: none;
   box-shadow: 0 12px 24px rgba(15, 139, 141, 0.18);
-  filter: saturate(0.92);
 }
 
 @media (max-width: 820px) {

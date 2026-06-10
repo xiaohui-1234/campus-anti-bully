@@ -53,7 +53,10 @@ public class MqttMessageQueue {
                         .ifPresentOrElse(handler -> handler.handle(envelope),
                                 () -> log.warn("No MQTT handler for action={}", envelope.getAction()));
             } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
+                if (!running) {
+                    break;
+                }
+                log.warn("MQTT message worker interrupted unexpectedly, continuing");
             } catch (Exception ex) {
                 log.error("MQTT message handle failed", ex);
             }

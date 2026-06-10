@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -25,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class StatusOnlineHandler implements MqttMessageHandler {
+
+    private static final Duration LAST_ONLINE_UPDATE_INTERVAL = Duration.ofMinutes(5);
 
     private final ObjectMapper objectMapper;
     private final DeviceService deviceService;
@@ -44,6 +47,8 @@ public class StatusOnlineHandler implements MqttMessageHandler {
         try {
             StatusOnlinePayload payload = objectMapper.readValue(envelope.getPayload(), StatusOnlinePayload.class);
             Device device = deviceService.findByDeviceId(envelope.getDeviceId());
+            boolean wasOnline = Boolean.TRUE.equals(
+                    stringRedisTemplate.hasKey(RedisKeys.deviceOnline(device.getDeviceId())));
             if ("online".equalsIgnoreCase(payload.getStatus())) {
                 LocalDateTime lastOnline = toTime(payload.getTimestamp());
                 stringRedisTemplate.opsForValue().set(
@@ -56,12 +61,19 @@ public class StatusOnlineHandler implements MqttMessageHandler {
                         String.valueOf(payload.getTimestamp()),
                         properties.getCache().getDeviceOnlineTtlSeconds(),
                         TimeUnit.SECONDS);
-                device.setLastOnlineTime(lastOnline);
-                deviceMapper.updateById(device);
-                webSocketPushService.pushDeviceStatus(device.getDeviceId(), DeviceOnlineStatus.ONLINE.name(), lastOnline);
+                if (shouldUpdateLastOnline(device.getLastOnlineTime(), lastOnline)) {
+                    device.setLastOnlineTime(lastOnline);
+                    deviceMapper.updateById(device);
+                }
+                if (!wasOnline) {
+                    webSocketPushService.pushDeviceStatus(device.getDeviceId(), DeviceOnlineStatus.ONLINE.name(), lastOnline);
+                }
             } else {
                 stringRedisTemplate.delete(RedisKeys.deviceOnline(device.getDeviceId()));
-                webSocketPushService.pushDeviceStatus(device.getDeviceId(), DeviceOnlineStatus.OFFLINE.name(), device.getLastOnlineTime());
+                if (wasOnline) {
+                    webSocketPushService.pushDeviceStatus(
+                            device.getDeviceId(), DeviceOnlineStatus.OFFLINE.name(), device.getLastOnlineTime());
+                }
             }
         } catch (Exception ex) {
             log.error("Handle status/online failed, mqtt_msg_id={}", envelope.getMqttMsgId(), ex);
@@ -74,5 +86,10 @@ public class StatusOnlineHandler implements MqttMessageHandler {
             return LocalDateTime.now();
         }
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.of("Asia/Shanghai"));
+    }
+
+    private boolean shouldUpdateLastOnline(LocalDateTime storedLastOnline, LocalDateTime currentLastOnline) {
+        return storedLastOnline == null
+                || !currentLastOnline.isBefore(storedLastOnline.plus(LAST_ONLINE_UPDATE_INTERVAL));
     }
 }

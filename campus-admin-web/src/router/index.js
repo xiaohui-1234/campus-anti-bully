@@ -6,6 +6,7 @@ import StorageConfig from '../views/StorageConfig.vue'
 import MqttConfig from '../views/MqttConfig.vue'
 import MqttTestTool from '../views/MqttTestTool.vue'
 import SystemInfo from '../views/SystemInfo.vue'
+import DeviceManagement from '../views/DeviceManagement.vue'
 
 const routes = [
   { path: '/login', component: LoginView },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/storage', component: StorageConfig },
   { path: '/mqtt', component: MqttConfig },
   { path: '/mqtt-test', component: MqttTestTool },
+  { path: '/devices', component: DeviceManagement },
   { path: '/system', component: SystemInfo }
 ]
 

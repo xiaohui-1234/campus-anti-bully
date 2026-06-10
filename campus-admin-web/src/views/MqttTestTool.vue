@@ -1,50 +1,105 @@
 <template>
   <AppShell>
     <div v-if="!activeDevice" class="device-page">
-      <div class="page-header">
+      <div class="page-header test-header">
         <div>
           <div class="page-title">硬件测试工具</div>
           <div class="page-subtitle">纯前端设备列表。每台设备独立保存 MQTT 参数、遗嘱和任务。</div>
         </div>
-        <el-button type="primary" @click="openDevice()">添加设备</el-button>
+        <el-button type="primary" :icon="Plus" @click="openDevice()">添加设备</el-button>
+      </div>
+
+      <div class="lab-toolbar">
+        <div class="lab-summary">
+          <div>
+            <span>模拟设备</span>
+            <strong>{{ devices.length }}</strong>
+          </div>
+          <div>
+            <span>已连接</span>
+            <strong class="connected-number">{{ connectedCount }}</strong>
+          </div>
+          <div>
+            <span>任务总数</span>
+            <strong>{{ totalTaskCount }}</strong>
+          </div>
+        </div>
+        <el-input
+          v-model="deviceKeyword"
+          clearable
+          :prefix-icon="Search"
+          placeholder="搜索设备名称、ID 或产品类型"
+        />
       </div>
 
       <div class="device-grid">
-        <el-card v-for="device in devices" :key="device.id" shadow="never" class="device-card" @click="enterDevice(device)">
+        <el-card v-for="device in filteredDevices" :key="device.id" shadow="never" class="device-card" @click="enterDevice(device)">
           <div class="device-head">
-            <div>
+            <div class="device-title">
+              <div class="device-symbol"><el-icon><Cpu /></el-icon></div>
+              <div>
               <div class="device-name">{{ device.name || device.device_id }}</div>
               <div class="device-id">{{ device.product_type }} / {{ device.device_id }}</div>
+              </div>
             </div>
-            <el-tag :type="runtime[device.id]?.connected ? 'success' : 'info'">
-              {{ runtime[device.id]?.connected ? '已连接' : '未连接' }}
+            <el-tag :type="runtime[device.id]?.connected ? 'success' : 'info'" effect="plain">
+              {{ runtime[device.id]?.connecting ? '连接中' : runtime[device.id]?.connected ? '已连接' : '未连接' }}
             </el-tag>
           </div>
           <div class="device-meta">
-            <span>{{ device.broker_url || '未配置 Broker' }}</span>
-            <span>{{ device.tasks.length }} 个任务</span>
+            <span><el-icon><Connection /></el-icon>{{ device.broker_url || '未配置 Broker' }}</span>
+            <span><el-icon><Operation /></el-icon>{{ device.tasks.length }} 个任务</span>
           </div>
           <div class="device-actions" @click.stop>
-            <el-button size="small" @click="openDevice(device)">参数</el-button>
-            <el-button size="small" type="danger" plain @click="removeDevice(device)">删除</el-button>
+            <el-button
+              v-if="!runtime[device.id]?.connected"
+              size="small"
+              type="primary"
+              plain
+              :icon="Connection"
+              :loading="runtime[device.id]?.connecting"
+              @click="connectDevice(device)"
+            >连接</el-button>
+            <el-button v-else size="small" :icon="SwitchButton" @click="disconnectDevice(device)">断开</el-button>
+            <el-button size="small" :icon="Edit" @click="openDevice(device)">参数</el-button>
+            <el-tooltip content="删除设备" placement="top">
+              <el-button size="small" type="danger" plain :icon="Delete" circle @click="removeDevice(device)" />
+            </el-tooltip>
           </div>
         </el-card>
-        <el-empty v-if="!devices.length" description="还没有模拟设备，先添加一台" />
+        <div v-if="!filteredDevices.length" class="device-empty">
+          <el-empty :description="deviceKeyword ? '没有匹配的模拟设备' : '还没有模拟设备，先添加一台'">
+            <el-button v-if="!deviceKeyword" type="primary" :icon="Plus" @click="openDevice()">添加设备</el-button>
+          </el-empty>
+        </div>
       </div>
     </div>
 
     <div v-else class="detail-page">
-      <div class="page-header">
-        <div>
-          <div class="page-title">{{ activeDevice.name || activeDevice.device_id }}</div>
-          <div class="page-subtitle">{{ activeDevice.product_type }} / {{ activeDevice.device_id }}</div>
+      <div class="page-header test-header">
+        <div class="detail-title">
+          <el-tooltip content="返回设备列表" placement="bottom">
+            <el-button :icon="ArrowLeft" circle @click="activeDevice = null" />
+          </el-tooltip>
+          <div>
+            <div class="page-title">{{ activeDevice.name || activeDevice.device_id }}</div>
+            <div class="page-subtitle">{{ activeDevice.product_type }} / {{ activeDevice.device_id }}</div>
+          </div>
         </div>
         <div class="head-actions">
-          <el-tag :type="currentRuntime.connected ? 'success' : 'info'">{{ currentRuntime.connected ? '已连接' : '未连接' }}</el-tag>
-          <el-button v-if="!currentRuntime.connected" type="primary" :loading="currentRuntime.connecting" @click="connectDevice(activeDevice)">连接</el-button>
-          <el-button v-else @click="disconnectDevice(activeDevice)">断开</el-button>
-          <el-button @click="activeDevice = null">返回列表</el-button>
+          <el-button :icon="Edit" @click="openDevice(activeDevice)">编辑参数</el-button>
+          <el-button v-if="!currentRuntime.connected" type="primary" :icon="Connection" :loading="currentRuntime.connecting" @click="connectDevice(activeDevice)">连接设备</el-button>
+          <el-button v-else :icon="SwitchButton" @click="disconnectDevice(activeDevice)">断开连接</el-button>
         </div>
+      </div>
+
+      <div class="connection-banner" :class="{ connected: currentRuntime.connected, connecting: currentRuntime.connecting }">
+        <div class="connection-state-icon"><el-icon><Connection /></el-icon></div>
+        <div>
+          <strong>{{ currentRuntime.connecting ? '正在连接设备' : currentRuntime.connected ? '设备连接正常' : '设备尚未连接' }}</strong>
+          <span>{{ currentRuntime.connecting ? '正在与 Broker 建立 WebSocket 连接' : currentRuntime.connected ? '可以发送任务并接收订阅消息' : '连接后才能发送任务和订阅 Topic' }}</span>
+        </div>
+        <code>{{ activeDevice.broker_url || '未配置 Broker' }}</code>
       </div>
 
       <div class="detail-layout">
@@ -53,8 +108,7 @@
             <div class="card-head">
               <span>设备参数</span>
               <div class="head-actions">
-                <el-button size="small" @click="openSubscribeDialog">订阅</el-button>
-                <el-button size="small" @click="openDevice(activeDevice)">编辑</el-button>
+                <el-button size="small" :icon="Bell" @click="openSubscribeDialog">管理订阅</el-button>
               </div>
             </div>
           </template>
@@ -86,22 +140,30 @@
           <template #header>
             <div class="card-head">
               <span>任务列表</span>
-              <el-button type="primary" size="small" @click="openTask()">添加任务</el-button>
+              <div class="card-head-actions">
+                <span>{{ runningTaskCount }} 个运行中 / {{ activeDevice.tasks.length }} 个任务</span>
+                <el-button type="primary" size="small" :icon="Plus" @click="openTask()">添加任务</el-button>
+              </div>
             </div>
           </template>
           <div class="task-list">
             <div v-for="task in activeDevice.tasks" :key="task.id" class="task-row">
               <div>
                 <div class="task-name">{{ task.name }}</div>
-                <div class="task-sub">{{ topicOf(activeDevice, task) }} / {{ task.interval_seconds }}s</div>
+                <div class="task-sub">{{ topicOf(activeDevice, task) }}</div>
+                <div class="task-interval">每 {{ task.interval_seconds }} 秒</div>
               </div>
               <div class="task-actions">
-                <el-tag :type="task.running ? 'success' : 'info'">{{ task.running ? '运行中' : '已停止' }}</el-tag>
-                <el-button size="small" :disabled="!currentRuntime.connected" @click="sendTask(activeDevice, task)">发送</el-button>
-                <el-button v-if="!task.running" size="small" type="primary" :disabled="!currentRuntime.connected" @click="startTask(activeDevice, task)">定时</el-button>
-                <el-button v-else size="small" @click="stopTask(task)">停止</el-button>
-                <el-button size="small" @click="openTask(task)">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="removeTask(task)">删除</el-button>
+                <el-tag :type="task.running ? 'success' : 'info'" effect="plain">{{ task.running ? '运行中' : '已停止' }}</el-tag>
+                <el-button size="small" type="primary" plain :icon="Promotion" :disabled="!currentRuntime.connected" @click="sendTask(activeDevice, task)">发送一次</el-button>
+                <el-button v-if="!task.running" size="small" :icon="VideoPlay" :disabled="!currentRuntime.connected" @click="startTask(activeDevice, task)">开始定时</el-button>
+                <el-button v-else size="small" :icon="VideoPause" @click="stopTask(task)">停止定时</el-button>
+                <el-tooltip content="编辑任务" placement="top">
+                  <el-button size="small" :icon="Edit" circle @click="openTask(task)" />
+                </el-tooltip>
+                <el-tooltip content="删除任务" placement="top">
+                  <el-button size="small" type="danger" plain :icon="Delete" circle @click="removeTask(task)" />
+                </el-tooltip>
               </div>
             </div>
             <el-empty v-if="!activeDevice.tasks.length" description="这台设备还没有任务" />
@@ -110,21 +172,38 @@
 
         <el-card shadow="never" class="log-card">
           <template #header>
-            <div class="card-head">
-              <span>收发日志</span>
-              <el-button size="small" @click="currentRuntime.logs = []">清空</el-button>
+            <div class="card-head log-card-head">
+              <div class="log-title">
+                <span>收发日志</span>
+                <em>{{ filteredLogs.length }} / {{ currentRuntime.logs.length }}</em>
+              </div>
+              <div class="log-toolbar">
+                <el-radio-group v-model="logFilter" size="small">
+                  <el-radio-button value="ALL">全部</el-radio-button>
+                  <el-radio-button value="IN">接收</el-radio-button>
+                  <el-radio-button value="OUT">发送</el-radio-button>
+                  <el-radio-button value="ERR">错误</el-radio-button>
+                  <el-radio-button value="SYS">系统</el-radio-button>
+                </el-radio-group>
+                <el-tooltip content="复制当前日志" placement="top">
+                  <el-button size="small" :icon="CopyDocument" circle :disabled="!filteredLogs.length" @click="copyLogs" />
+                </el-tooltip>
+                <el-tooltip content="清空全部日志" placement="top">
+                  <el-button size="small" :icon="Delete" circle :disabled="!currentRuntime.logs.length" @click="clearLogs" />
+                </el-tooltip>
+              </div>
             </div>
           </template>
           <div class="logs">
-            <div v-for="(item, index) in currentRuntime.logs" :key="index" class="log-item">
+            <div v-for="(item, index) in filteredLogs" :key="index" class="log-item">
               <div class="log-head">
-                <el-tag size="small" :type="item.type === 'IN' ? 'success' : item.type === 'OUT' ? 'primary' : 'danger'">{{ item.type }}</el-tag>
+                <el-tag size="small" :type="logTagType(item.type)" effect="plain">{{ logTypeLabel(item.type) }}</el-tag>
                 <span>{{ item.topic }}</span>
                 <em>{{ item.time }}</em>
               </div>
               <pre>{{ item.payload }}</pre>
             </div>
-            <el-empty v-if="!currentRuntime.logs.length" description="暂无日志" />
+            <el-empty v-if="!filteredLogs.length" :description="currentRuntime.logs.length ? '当前筛选条件下暂无日志' : '连接设备并发送任务后，日志会显示在这里'" />
           </div>
         </el-card>
       </div>
@@ -220,7 +299,23 @@
 <script setup>
 import mqtt from 'mqtt'
 import { computed, onBeforeUnmount, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  ArrowLeft,
+  Bell,
+  Connection,
+  CopyDocument,
+  Cpu,
+  Delete,
+  Edit,
+  Operation,
+  Plus,
+  Promotion,
+  Search,
+  SwitchButton,
+  VideoPause,
+  VideoPlay
+} from '@element-plus/icons-vue'
 import AppShell from '../components/AppShell.vue'
 
 const STORE_KEY = 'mqtt_device_lab'
@@ -232,9 +327,24 @@ const deviceDialog = ref(false)
 const taskDialog = ref(false)
 const subscribeDialog = ref(false)
 const taskTemplate = ref('heartbeat')
+const deviceKeyword = ref('')
+const logFilter = ref('ALL')
 const deviceForm = reactive(blankDevice())
 const taskForm = reactive(blankTask())
 const currentRuntime = computed(() => activeDevice.value ? ensureRuntime(activeDevice.value) : { connected: false, logs: [] })
+const connectedCount = computed(() => devices.value.filter((device) => runtime[device.id]?.connected).length)
+const totalTaskCount = computed(() => devices.value.reduce((total, device) => total + device.tasks.length, 0))
+const filteredDevices = computed(() => {
+  const keyword = deviceKeyword.value.trim().toLowerCase()
+  if (!keyword) return devices.value
+  return devices.value.filter((device) => [device.name, device.device_id, device.product_type]
+    .some((value) => String(value || '').toLowerCase().includes(keyword)))
+})
+const runningTaskCount = computed(() => activeDevice.value?.tasks.filter((task) => task.running).length || 0)
+const filteredLogs = computed(() => {
+  if (logFilter.value === 'ALL') return currentRuntime.value.logs
+  return currentRuntime.value.logs.filter((item) => item.type === logFilter.value)
+})
 
 function blankDevice() {
   return {
@@ -281,6 +391,7 @@ function normalizeDevice(device) {
 
 function enterDevice(device) {
   activeDevice.value = device
+  logFilter.value = 'ALL'
   ensureRuntime(device)
 }
 
@@ -315,7 +426,16 @@ function fillWillTemplate() {
   deviceForm.will_payload = JSON.stringify(defaultWillPayload(deviceForm.product_type, deviceForm.device_id), null, 2)
 }
 
-function removeDevice(device) {
+async function removeDevice(device) {
+  try {
+    await ElMessageBox.confirm(`确认删除模拟设备“${device.name || device.device_id}”吗？`, '删除设备', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
   disconnectDevice(device)
   devices.value = devices.value.filter((item) => item.id !== device.id)
   if (activeDevice.value?.id === device.id) activeDevice.value = null
@@ -355,7 +475,16 @@ function saveTask() {
   saveLocal()
 }
 
-function removeTask(task) {
+async function removeTask(task) {
+  try {
+    await ElMessageBox.confirm(`确认删除任务“${task.name}”吗？`, '删除任务', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
   stopTask(task)
   activeDevice.value.tasks = activeDevice.value.tasks.filter((item) => item.id !== task.id)
   saveLocal()
@@ -654,6 +783,47 @@ function addLog(device, type, topic, payload) {
   state.logs = state.logs.slice(0, 120)
 }
 
+function logTagType(type) {
+  if (type === 'IN') return 'success'
+  if (type === 'OUT') return 'primary'
+  if (type === 'ERR') return 'danger'
+  return 'info'
+}
+
+function logTypeLabel(type) {
+  return {
+    IN: '接收',
+    OUT: '发送',
+    ERR: '错误',
+    SYS: '系统'
+  }[type] || type
+}
+
+async function copyLogs() {
+  const text = filteredLogs.value
+    .map((item) => `[${item.time}] ${item.type} ${item.topic}\n${item.payload}`)
+    .join('\n\n')
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('日志已复制')
+  } catch {
+    ElMessage.error('复制失败，请检查浏览器剪贴板权限')
+  }
+}
+
+async function clearLogs() {
+  try {
+    await ElMessageBox.confirm('确认清空当前设备的全部收发日志吗？', '清空日志', {
+      confirmButtonText: '清空',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
+  currentRuntime.value.logs = []
+}
+
 function saveLocal() {
   const cleanDevices = devices.value.map((device) => ({
     ...device,
@@ -673,19 +843,117 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.device-page,
+.detail-page {
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.test-header {
+  min-height: 52px;
+}
+
+.lab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid #e5e9ed;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.lab-toolbar .el-input {
+  width: 340px;
+}
+
+.lab-summary {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.lab-summary > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.lab-summary span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.lab-summary strong {
+  color: #344054;
+  font-size: 18px;
+}
+
+.lab-summary .connected-number {
+  color: #16855b;
+}
+
 .device-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 18px;
+}
+
+.device-title,
+.detail-title,
+.connection-banner,
+.card-head-actions,
+.log-title,
+.log-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.device-title {
+  min-width: 0;
+  gap: 11px;
+}
+
+.device-symbol {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  background: #e9f5f2;
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.device-empty {
+  grid-column: 1 / -1;
+  padding: 36px 0;
+  border: 1px dashed #d8e0e5;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 .device-card {
   border-radius: 8px;
   cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .device-card:hover {
-  border-color: #0f8b8d;
+  border-color: #b8d8d3;
+  box-shadow: 0 10px 24px rgba(25, 64, 58, 0.08);
+  transform: translateY(-2px);
+}
+
+.device-card :deep(.el-card__body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 218px;
+  padding: 20px;
 }
 
 .device-head,
@@ -693,7 +961,6 @@ onBeforeUnmount(() => {
 .device-actions,
 .head-actions,
 .card-head,
-.task-row,
 .task-actions,
 .log-head {
   display: flex;
@@ -703,7 +970,6 @@ onBeforeUnmount(() => {
 
 .device-head,
 .card-head,
-.task-row,
 .log-head {
   justify-content: space-between;
 }
@@ -712,6 +978,10 @@ onBeforeUnmount(() => {
 .task-name {
   color: #111827;
   font-weight: 800;
+}
+
+.device-name {
+  font-size: 15px;
 }
 
 .device-id,
@@ -724,20 +994,108 @@ onBeforeUnmount(() => {
 .device-meta {
   justify-content: space-between;
   margin-top: 18px;
+  padding: 12px 0;
+  border-top: 1px solid #eef0f4;
+  border-bottom: 1px solid #eef0f4;
   color: #667085;
   font-size: 12px;
 }
 
+.device-meta span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 5px;
+}
+
+.device-meta span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .device-actions {
+  flex-wrap: wrap;
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.detail-title {
+  gap: 12px;
+}
+
+.connection-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(240px, auto);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 13px 16px;
+  border: 1px solid #e5e9ed;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.connection-state-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 7px;
+  background: #f1f3f5;
+  color: #667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.connection-banner > div:nth-child(2) {
+  display: grid;
+  gap: 3px;
+}
+
+.connection-banner strong {
+  color: #344054;
+  font-size: 13px;
+}
+
+.connection-banner span {
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.connection-banner code {
+  overflow: hidden;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #667085;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-banner.connected {
+  border-color: #cce7dc;
+  background: #f8fcfa;
+}
+
+.connection-banner.connected .connection-state-icon {
+  background: #e5f5ed;
+  color: #16855b;
+}
+
+.connection-banner.connecting .connection-state-icon {
+  background: #edf4fb;
+  color: #3378ad;
 }
 
 .detail-layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  grid-template-areas:
+    "side main"
+    "side logs";
   align-items: start;
-  gap: 16px;
+  gap: 18px;
 }
 
 .side-card,
@@ -746,13 +1104,42 @@ onBeforeUnmount(() => {
   border-radius: 8px;
 }
 
+.side-card {
+  grid-area: side;
+  position: sticky;
+  top: 16px;
+  min-height: 280px;
+}
+
+.main-card {
+  grid-area: main;
+  min-width: 0;
+  min-height: 280px;
+}
+
 .log-card {
-  grid-column: 1 / -1;
+  grid-area: logs;
+  min-width: 0;
 }
 
 .task-list {
   display: grid;
   gap: 12px;
+}
+
+.card-head-actions,
+.log-toolbar {
+  gap: 10px;
+}
+
+.card-head-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.card-head-actions > span {
+  color: #98a2b3;
+  font-size: 11px;
 }
 
 .summary-list {
@@ -769,7 +1156,7 @@ onBeforeUnmount(() => {
   padding: 8px 10px;
   border: 1px solid #edf0f5;
   border-radius: 8px;
-  background: #fbfcfe;
+  background: #fafcfc;
 }
 
 .summary-item span {
@@ -813,13 +1200,34 @@ onBeforeUnmount(() => {
 }
 
 .task-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
+  background: #ffffff;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.task-row:hover {
+  border-color: #cddfdc;
+  background: #fbfdfd;
 }
 
 .task-row > div:first-child {
   min-width: 0;
+}
+
+.task-interval {
+  width: fit-content;
+  margin-top: 7px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 11px;
 }
 
 .task-sub {
@@ -830,18 +1238,45 @@ onBeforeUnmount(() => {
 }
 
 .task-actions {
+  max-width: 520px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .logs {
-  max-height: 360px;
+  max-height: 440px;
   overflow: auto;
+  padding: 0 4px;
+}
+
+.log-title {
+  gap: 8px;
+}
+
+.log-title em {
+  color: #98a2b3;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.log-toolbar {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.log-card-head {
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.log-card-head .log-toolbar {
+  margin-left: auto;
 }
 
 .log-item {
   border-bottom: 1px solid #eef0f4;
-  padding: 10px 0;
+  padding: 12px 0;
 }
 
 .log-head span {
@@ -858,6 +1293,9 @@ onBeforeUnmount(() => {
 
 pre {
   margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f6f8fa;
   color: #475467;
   font-size: 12px;
   white-space: pre-wrap;
@@ -866,12 +1304,19 @@ pre {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-grid > :deep(.el-form-item:last-child:nth-child(odd)) {
+  grid-column: 1 / -1;
 }
 
 .form-tip {
   margin-top: -4px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f6f8fa;
   color: #667085;
   font-size: 13px;
   line-height: 1.6;
@@ -881,7 +1326,8 @@ pre {
   margin: -4px 0 14px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f6f8fa;
+  border: 1px solid #e5eeee;
+  background: #f7fbfa;
   color: #344054;
   font-size: 13px;
   word-break: break-all;
@@ -899,6 +1345,10 @@ pre {
   margin-left: 12px;
 }
 
+.will-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(120px, 0.7fr) minmax(120px, 0.7fr);
+}
+
 .task-form-grid {
   grid-template-columns: 1.4fr 1fr 0.8fr;
 }
@@ -906,18 +1356,71 @@ pre {
 :deep(.json-editor textarea) {
   font-family: Consolas, Monaco, monospace;
   line-height: 1.55;
+  background: #fafbfc;
+}
+
+:deep(.side-card .el-card__header),
+:deep(.main-card .el-card__header),
+:deep(.log-card .el-card__header) {
+  padding: 15px 18px;
+  background: #fafbfc;
+}
+
+:deep(.card-head > span) {
+  color: #344054;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 @media (max-width: 1100px) {
+  .lab-toolbar,
+  .connection-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lab-toolbar .el-input {
+    width: 100%;
+  }
+
+  .connection-banner code {
+    width: 100%;
+  }
+
   .detail-layout,
   .form-grid,
   .task-form-grid,
+  .will-grid,
   .subscribe-row {
     grid-template-columns: 1fr;
   }
 
+  .detail-layout {
+    grid-template-areas:
+      "side"
+      "main"
+      "logs";
+  }
+
+  .side-card {
+    position: static;
+  }
+
+  .task-row {
+    grid-template-columns: 1fr;
+  }
+
+  .task-actions {
+    max-width: none;
+    justify-content: flex-start;
+  }
+
   .log-card {
-    grid-column: auto;
+    grid-area: logs;
   }
 }
 </style>

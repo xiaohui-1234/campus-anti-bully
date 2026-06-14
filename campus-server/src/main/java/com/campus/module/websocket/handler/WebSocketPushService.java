@@ -115,9 +115,11 @@ public class WebSocketPushService {
             log.debug("WebSocket push result collection failed, device_id={}", deviceId, ex);
         } finally {
             for (PendingPush task : tasks) {
-                if (!task.future().isDone() && task.future().cancel(true)
-                        && !sessionsActivelySending.contains(task.sessionId())) {
+                if (!task.future().isDone()) {
+                    task.future().cancel(true);
+                    sessionManager.removeById(task.sessionId());
                     sessionsSending.remove(task.sessionId());
+                    sessionsActivelySending.remove(task.sessionId());
                 }
             }
         }

@@ -176,6 +176,7 @@ class WebSocketSessionCleanupTest {
         try {
             assertTimeoutPreemptively(Duration.ofSeconds(1),
                     () -> assertFalse(pushService.pushDeviceStatus("device-1", "ONLINE", null)));
+            assertTrue(manager.sessionsByDevice("device-1").isEmpty());
             assertTimeoutPreemptively(Duration.ofSeconds(1),
                     () -> assertFalse(pushService.pushDeviceStatus("device-1", "ONLINE", null)));
         } finally {

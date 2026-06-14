@@ -61,6 +61,10 @@ public class WebSocketSessionManager {
         }
     }
 
+    public void removeById(String sessionId) {
+        remove(sessionId);
+    }
+
     private void remove(String sessionId) {
         sessionsAwaitingPong.remove(sessionId);
         String userId = sessionUsers.remove(sessionId);

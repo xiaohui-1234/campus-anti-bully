@@ -4,6 +4,7 @@ import com.campus.config.CampusProperties;
 import com.campus.module.mqtt.router.MqttRouter;
 import com.campus.module.mqtt.topic.MqttTopicBuilder;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -48,6 +49,18 @@ public class MqttReceiver implements MqttCallback {
             log.info("MQTT receiver connected, broker={}", properties.getMqtt().getBrokerUrl());
         } catch (Exception ex) {
             log.warn("MQTT receiver start failed, application will continue", ex);
+        }
+    }
+
+    @PreDestroy
+    public void stop() {
+        try {
+            if (mqttClient.isConnected()) {
+                mqttClient.disconnectForcibly(1000L, properties.getMqtt().getCompletionTimeoutMs());
+            }
+            mqttClient.close();
+        } catch (Exception ex) {
+            log.warn("MQTT client shutdown failed", ex);
         }
     }
 

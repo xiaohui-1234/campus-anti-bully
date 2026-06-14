@@ -5,6 +5,8 @@ const time = require('../../utils/time')
 Page({
   data: {
     loading: false,
+    initialized: false,
+    loadError: false,
     navStyle: '',
     contentStyle: '',
     stats: {
@@ -18,34 +20,72 @@ Page({
     getApp().setNavLayout(this)
   },
   onShow() {
+    this.pageVisible = true
     getApp().setNavLayout(this)
     getApp().deferEnsureEventRealtime()
     this.load()
   },
-  async load() {
-    this.setData({ loading: true })
+  async onPullDownRefresh() {
     try {
-      const devices = await deviceApi.list({ page: 1, size: 100 })
-      const events = await eventApi.search({ page: 1, size: 100 })
-      const deviceRecords = devices.records || []
-      const eventRecords = events.records || []
+      await this.load(true)
+    } finally {
+      wx.stopPullDownRefresh()
+    }
+  },
+  onUnload() {
+    clearTimeout(this.reloadTimer)
+  },
+  onHide() {
+    this.pageVisible = false
+    clearTimeout(this.reloadTimer)
+  },
+  async load(force = false, bypassFresh = false) {
+    if (!force && !bypassFresh && this.lastLoadedAt && Date.now() - this.lastLoadedAt < 5000) return
+    const requestId = (this.loadRequestId || 0) + 1
+    this.loadRequestId = requestId
+    this.setData({ loading: true, loadError: false })
+    try {
+      const range = time.todayRange()
+      const [devicePage, todayEvents, unreadEvents] = await Promise.all([
+        getApp().getBoundDevices(force),
+        eventApi.search({ start_time: range.start_time, end_time: range.end_time, page: 1, size: 1 }, { showError: false }),
+        getApp().refreshUnreadEventBadge(force)
+      ])
+      if (requestId !== this.loadRequestId) return
+      const devices = devicePage.records || []
       this.setData({
+        initialized: true,
         stats: {
-          deviceTotal: deviceRecords.length,
-          onlineTotal: deviceRecords.filter((item) => (item.online_status || item.onlineStatus) === 'ONLINE').length,
-          todayEvents: eventRecords.filter((item) => time.isToday(item.event_time || item.eventTime)).length,
-          unreadEvents: eventRecords.filter((item) => (item.read_status || item.readStatus) === 'UNREAD').length
+          deviceTotal: devices.length,
+          onlineTotal: devices.filter((item) => (item.online_status || item.onlineStatus) === 'ONLINE').length,
+          todayEvents: todayEvents.total || 0,
+          unreadEvents
         }
       })
+      this.lastLoadedAt = Date.now()
+    } catch (err) {
+      if (requestId === this.loadRequestId) {
+        this.setData({ loadError: true })
+      }
     } finally {
-      this.setData({ loading: false })
+      if (requestId === this.loadRequestId) {
+        this.setData({ loading: false })
+      }
     }
   },
   onRealtimeDeviceStatus() {
-    this.load()
+    const devices = getApp().globalData.boundDevices || []
+    this.setData({
+      'stats.deviceTotal': devices.length,
+      'stats.onlineTotal': devices.filter((item) => (item.online_status || item.onlineStatus) === 'ONLINE').length
+    })
   },
   onRealtimeNewEvent() {
-    this.load()
-    getApp().refreshUnreadEventBadge()
+    this.scheduleLoad()
+  },
+  scheduleLoad() {
+    if (!this.pageVisible) return
+    clearTimeout(this.reloadTimer)
+    this.reloadTimer = setTimeout(() => this.load(false, true), 1200)
   }
 })

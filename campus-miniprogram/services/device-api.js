@@ -1,12 +1,44 @@
 const request = require('./request')
 
-function list(params = {}) {
-  return request({ url: `/devices?page=${params.page || 1}&size=${params.size || 10}` })
+function list(params = {}, options = {}) {
+  return request({
+    url: `/devices?page=${params.page || 1}&size=${params.size || 10}`,
+    showError: options.showError
+  })
 }
 
-function search(params = {}) {
+function search(params = {}, options = {}) {
   const query = buildQuery(params)
-  return request({ url: `/devices/search${query}` })
+  return request({ url: `/devices/search${query}`, showError: options.showError })
+}
+
+async function listAll(options = {}) {
+  return fetchAllPages((page, requestOptions) => list({ page, size: 100 }, requestOptions), options)
+}
+
+async function searchAll(params = {}, options = {}) {
+  return fetchAllPages((page, requestOptions) => search(Object.assign({}, params, {
+    page,
+    size: 100
+  }), requestOptions), options)
+}
+
+async function fetchAllPages(fetchPage, options) {
+  const first = await fetchPage(1, options)
+  const records = first.records || []
+  const total = Number(first.total) || records.length
+  const size = Number(first.size) || 100
+  const pageTotal = Math.ceil(total / size)
+  if (pageTotal <= 1) {
+    return { records, total }
+  }
+  const rest = await Promise.all(
+    Array.from({ length: pageTotal - 1 }, (_, index) => fetchPage(index + 2, { showError: false }))
+  )
+  return {
+    records: records.concat(...rest.map((item) => item.records || [])),
+    total
+  }
 }
 
 function bind(data) {
@@ -30,7 +62,9 @@ function buildQuery(params) {
 
 module.exports = {
   list,
+  listAll,
   search,
+  searchAll,
   bind,
   updateInfo,
   unbind

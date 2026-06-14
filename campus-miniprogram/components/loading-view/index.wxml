@@ -1,3 +1,7 @@
-<view class="loading-slot">
-  <view class="loading {{loading ? 'is-visible' : ''}}">加载中...</view>
+<view class="loading-slot {{loading ? 'is-visible' : ''}}">
+  <view wx:if="{{loading}}" class="loading-dots">
+    <view class="loading-dot"></view>
+    <view class="loading-dot"></view>
+    <view class="loading-dot"></view>
+  </view>
 </view>

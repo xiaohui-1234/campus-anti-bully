@@ -2,13 +2,22 @@ let currentAudio = null
 let currentEventId = ''
 let currentHandlers = null
 let playToken = 0
+let lastProgressEmittedAt = 0
+let lastProgress = -1
 
-function emitState(playing, progress) {
+function emitState(playing, progress, force = false) {
+  const normalizedProgress = Math.round(Math.max(0, Math.min(100, progress || 0)))
+  const now = Date.now()
+  if (playing && !force) {
+    if (normalizedProgress === lastProgress || now - lastProgressEmittedAt < 250) return
+  }
+  lastProgress = normalizedProgress
+  lastProgressEmittedAt = now
   if (currentHandlers && currentHandlers.onState) {
     currentHandlers.onState({
       event_id: currentEventId,
       playing,
-      progress: Math.max(0, Math.min(100, progress || 0))
+      progress: normalizedProgress
     })
   }
 }
@@ -29,6 +38,8 @@ function destroyCurrentAudio(shouldEmit) {
   currentAudio = null
   currentEventId = ''
   currentHandlers = null
+  lastProgress = -1
+  lastProgressEmittedAt = 0
   if (shouldEmit && handlers && handlers.onState) {
     handlers.onState({
       event_id: eventId,
@@ -64,7 +75,7 @@ function play(src, options) {
   currentHandlers = options || null
   audio.src = src
   audio.onPlay(() => {
-    emitState(true, 0)
+    emitState(true, 0, true)
   })
   audio.onTimeUpdate(() => {
     const duration = audio.duration || 0

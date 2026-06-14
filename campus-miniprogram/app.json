@@ -5,7 +5,8 @@
     "pages/events/index",
     "pages/devices/index",
     "pages/status/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/agreement/index"
   ],
   "subPackages": [],
   "window": {

@@ -138,8 +138,9 @@
   line-height: 1.5;
 }
 
-.agreement text {
+.agreement navigator {
   color: #10b969;
+  display: inline;
 }
 
 .modal-mask {
@@ -274,9 +275,13 @@
 .profile-warning {
   margin-top: 22rpx;
   text-align: center;
-  color: #10b969;
+  color: #d18426;
   font-size: 27rpx;
   font-weight: 700;
+}
+
+.profile-warning.ready {
+  color: #10b969;
 }
 
 .dialog-actions {

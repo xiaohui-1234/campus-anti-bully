@@ -14,12 +14,12 @@
   <view class="hero">
     <view>
       <view class="hero-kicker">待关注事件</view>
-      <view class="hero-title">{{events.length}}</view>
-      <view class="hero-subtitle">新报警会自动置顶，离线后可补拉</view>
+      <view class="hero-title">{{pendingTotal}}</view>
+      <view class="hero-subtitle">新报警会自动置顶，网络恢复后自动补齐</view>
     </view>
-    <view class="hero-status">
+    <view class="hero-status {{realtimeClass}}">
       <view class="pulse"></view>
-      <text>WebSocket</text>
+      <text>{{realtimeText}}</text>
     </view>
   </view>
 
@@ -31,13 +31,13 @@
     </view>
     <view class="summary-item">
       <view class="summary-mark event"></view>
-      <view class="num">{{events.length}}</view>
+      <view class="num">{{pendingTotal}}</view>
       <view class="label">待关注</view>
     </view>
   </view>
 
   <view class="quick-actions">
-    <navigator url="/pages/devices/index" open-type="switchTab" class="quick-action">绑定设备</navigator>
+    <navigator url="/pages/devices/index" open-type="switchTab" class="quick-action">管理设备</navigator>
     <navigator url="/pages/events/index" open-type="switchTab" class="quick-action">查看事件</navigator>
     <navigator url="/pages/profile/index" open-type="switchTab" class="quick-action">个人资料</navigator>
   </view>
@@ -47,9 +47,15 @@
     <navigator url="/pages/events/index" open-type="switchTab" class="section-action">全部</navigator>
   </view>
 
-  <loading-view loading="{{loading}}" />
+  <loading-view loading="{{loading && !initialized}}" />
   <block wx:if="{{events.length}}">
     <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" audio-state="{{audioState}}" bind:open="openEvent" bind:play="playAudio" />
   </block>
-  <empty-state wx:elif="{{!loading}}" title="暂无新事件" desc="已通过 HTTP 补拉和 WebSocket 同步" />
+  <empty-state
+    wx:elif="{{!loading || initialized}}"
+    title="{{loadError ? '首页加载失败' : '暂无新事件'}}"
+    desc="{{loadError ? '请检查网络连接后重试' : '新报警将在这里自动显示'}}"
+    action-text="{{loadError ? '重新加载' : '查看历史事件'}}"
+    bind:action="handleEmptyAction"
+  />
 </view>

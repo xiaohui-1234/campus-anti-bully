@@ -1,6 +1,8 @@
 {
   "navigationBarTitleText": "校园防霸凌",
   "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
   "usingComponents": {
     "event-card": "../../components/event-card/index",
     "empty-state": "../../components/empty-state/index",

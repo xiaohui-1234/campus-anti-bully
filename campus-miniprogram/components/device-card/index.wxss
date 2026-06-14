@@ -89,3 +89,20 @@
   font-size: 24rpx;
   gap: 20rpx;
 }
+
+.device-note,
+.device-time {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-note {
+  flex: 1;
+}
+
+.device-time {
+  flex: 0 1 auto;
+  text-align: right;
+}

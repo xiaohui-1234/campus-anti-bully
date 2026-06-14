@@ -1,5 +1,6 @@
 ﻿const authApi = require('../../services/auth-api')
 const userApi = require('../../services/user-api')
+const storage = require('../../utils/storage')
 
 Page({
   data: {
@@ -15,6 +16,10 @@ Page({
   },
   onLoad() {
     this.setNavLayout()
+    if (storage.getAccessToken()) {
+      getApp().deferEnsureEventRealtime()
+      wx.switchTab({ url: '/pages/home/index' })
+    }
   },
   setNavLayout() {
     const systemInfo = wx.getSystemInfoSync()
@@ -40,6 +45,7 @@ Page({
   },
   closeProfileDialog() {
     if (this.data.loading) return
+    getApp().resetSession()
     this.setData({ profileVisible: false })
   },
   onChooseAvatar(event) {

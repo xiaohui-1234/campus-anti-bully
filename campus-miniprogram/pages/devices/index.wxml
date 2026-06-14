@@ -20,20 +20,27 @@
     <view class="section-action" bindtap="reload">刷新</view>
   </view>
 
-  <loading-view loading="{{loading}}" />
+  <loading-view loading="{{loading && !initialized}}" />
   <block wx:if="{{devices.length}}">
     <device-card wx:for="{{devices}}" wx:key="device_id" device="{{item}}" bind:open="openDetail" />
+    <view wx:if="{{hasMore}}" class="button secondary load-more" bindtap="loadMore">加载更多设备</view>
   </block>
-  <empty-state wx:elif="{{!loading}}" title="暂无设备" desc="输入绑定码后添加第一台设备" />
+  <empty-state
+    wx:elif="{{!loading || initialized}}"
+    title="{{loadError ? '设备加载失败' : (keyword ? '未找到设备' : '暂无设备')}}"
+    desc="{{loadError ? '请检查网络连接后重试' : (keyword ? '换个关键词，或清除搜索查看全部设备' : '输入设备编号和一次性绑定码，添加第一台设备')}}"
+    action-text="{{loadError ? '重新加载' : (keyword ? '清除搜索' : '添加设备')}}"
+    bind:action="handleEmptyAction"
+  />
 
   <popup-panel visible="{{bindVisible}}" bind:close="closePanels">
     <view class="detail-handle"></view>
     <view class="detail-title">绑定设备</view>
     <view class="detail-desc">输入设备编号和一次性绑定码，绑定后即可接收报警</view>
-    <input class="input form-input" placeholder="device_id" value="{{bindForm.device_id}}" bindinput="onBindDeviceId" />
-    <input class="input form-input" placeholder="绑定码" value="{{bindForm.bind_code}}" bindinput="onBindCode" />
-    <input class="input form-input" placeholder="设备名称" value="{{bindForm.device_name}}" bindinput="onBindName" />
-    <view class="button" bindtap="submitBind">确认绑定</view>
+    <input class="input form-input" placeholder="设备编号" maxlength="64" value="{{bindForm.device_id}}" bindinput="onBindDeviceId" />
+    <input class="input form-input" placeholder="一次性绑定码" maxlength="32" value="{{bindForm.bind_code}}" bindinput="onBindCode" />
+    <input class="input form-input" placeholder="设备名称（选填）" maxlength="50" value="{{bindForm.device_name}}" bindinput="onBindName" />
+    <view class="button" bindtap="submitBind">{{actionLoading ? '绑定中...' : '确认绑定'}}</view>
   </popup-panel>
 
   <popup-panel visible="{{detailVisible}}" bind:close="closePanels">
@@ -41,12 +48,12 @@
       <view class="detail-handle"></view>
       <view class="detail-title">{{currentDevice.device_name || currentDevice.deviceName || currentDevice.device_id}}</view>
       <view class="detail-desc">这些信息只影响当前用户看到的设备备注</view>
-      <input class="input form-input" placeholder="设备名称" value="{{editForm.device_name}}" bindinput="onEditName" />
-      <input class="input form-input" placeholder="地点" value="{{editForm.location}}" bindinput="onEditLocation" />
-      <input class="input form-input" placeholder="备注" value="{{editForm.note}}" bindinput="onEditNote" />
+      <input class="input form-input" placeholder="设备名称" maxlength="50" value="{{editForm.device_name}}" bindinput="onEditName" />
+      <input class="input form-input" placeholder="地点" maxlength="100" value="{{editForm.location}}" bindinput="onEditLocation" />
+      <input class="input form-input" placeholder="备注" maxlength="200" value="{{editForm.note}}" bindinput="onEditNote" />
       <view class="detail-actions">
-        <view class="button danger" bindtap="submitUnbind">解绑</view>
-        <view class="button" bindtap="submitEdit">保存</view>
+        <view class="button danger" bindtap="submitUnbind">{{actionLoading ? '处理中...' : '解绑'}}</view>
+        <view class="button" bindtap="submitEdit">{{actionLoading ? '保存中...' : '保存'}}</view>
       </view>
     </view>
   </popup-panel>

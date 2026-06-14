@@ -5,7 +5,9 @@
 <view class="page" style="{{contentStyle}}">
   <view class="page-title">个人</view>
   <view class="page-subtitle">管理登录资料、联系方式和账号状态</view>
-  <loading-view loading="{{loading}}" />
+  <loading-view loading="{{loading && !initialized}}" />
+  <empty-state wx:if="{{loadError && !loading && !form.user_id && !form.userId}}" title="资料加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
+  <block wx:else>
   <view class="profile-card">
     <image wx:if="{{form.avatar_url || form.avatarUrl}}" class="avatar" src="{{form.avatar_url || form.avatarUrl}}" mode="aspectFill"></image>
     <view wx:else class="avatar avatar-empty">我</view>
@@ -17,10 +19,12 @@
 
   <view class="panel form">
     <view class="form-title">基础资料</view>
-    <input class="input form-input" placeholder="昵称" value="{{form.nickname}}" bindinput="onNickname" />
-    <input class="input form-input" placeholder="手机号" value="{{form.phone}}" bindinput="onPhone" />
-    <input class="input form-input" placeholder="邮箱" value="{{form.email}}" bindinput="onEmail" />
-    <view class="button" bindtap="saveProfile">保存资料</view>
+    <input class="input form-input" placeholder="昵称" maxlength="32" value="{{form.nickname}}" bindinput="onNickname" />
+    <input class="input form-input" type="number" placeholder="手机号（选填）" maxlength="11" value="{{form.phone}}" bindinput="onPhone" />
+    <input class="input form-input" placeholder="邮箱（选填）" maxlength="100" value="{{form.email}}" bindinput="onEmail" />
+    <view class="button {{formDirty ? '' : 'secondary'}}" bindtap="saveProfile">
+      {{actionLoading ? '保存中...' : (formDirty ? '保存资料' : '资料未修改')}}
+    </view>
   </view>
 
   <view class="panel action-list">
@@ -29,12 +33,13 @@
       <text class="arrow">›</text>
     </view>
     <view class="action-item" bindtap="login">
-      <text>重新登录</text>
+      <text>切换账号</text>
       <text class="arrow">›</text>
     </view>
     <view class="action-item danger-text" bindtap="logout">
-      <text>退出登录</text>
+      <text>{{actionLoading ? '正在退出...' : '退出登录'}}</text>
       <text class="arrow">›</text>
     </view>
   </view>
+  </block>
 </view>

@@ -68,6 +68,18 @@
   background: #b9f6d0;
 }
 
+.hero-status.connecting .pulse {
+  background: #ffe59a;
+}
+
+.hero-status.offline {
+  background: rgba(74, 31, 31, 0.2);
+}
+
+.hero-status.offline .pulse {
+  background: #ffc2bd;
+}
+
 .summary {
   display: grid;
   grid-template-columns: 1fr 1fr;

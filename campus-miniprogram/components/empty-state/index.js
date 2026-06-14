@@ -7,6 +7,15 @@ Component({
     desc: {
       type: String,
       value: '稍后再看看'
+    },
+    actionText: {
+      type: String,
+      value: ''
+    }
+  },
+  methods: {
+    handleAction() {
+      this.triggerEvent('action')
     }
   }
 })

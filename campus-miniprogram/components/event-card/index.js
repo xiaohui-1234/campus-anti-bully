@@ -16,7 +16,7 @@ Component({
       const eventId = event.event_id || event.eventId
       const isPlaying = !!(audioState && audioState.playing && audioState.event_id === eventId)
       const progress = isPlaying ? Math.max(0, Math.min(100, Number(audioState.progress) || 0)) : 0
-      this.setData({
+      const next = {
         readText: readStatus === 'READ' ? '已读' : '未读',
         fileText: this.fileStatusText(fileStatus),
         canPlay: fileStatus === 'SUCCESS',
@@ -24,7 +24,16 @@ Component({
         playProgress: progress,
         progressStyle: `width: ${progress}%`,
         playText: isPlaying ? '停止播放' : '播放语音'
-      })
+      }
+      const updates = Object.keys(next).reduce((result, key) => {
+        if (this.data[key] !== next[key]) {
+          result[key] = next[key]
+        }
+        return result
+      }, {})
+      if (Object.keys(updates).length) {
+        this.setData(updates)
+      }
     }
   },
   data: {

@@ -51,3 +51,7 @@
   gap: 16rpx;
   margin-top: 20rpx;
 }
+
+.load-more {
+  margin: 20rpx 0 40rpx;
+}

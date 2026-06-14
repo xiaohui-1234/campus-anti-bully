@@ -26,10 +26,12 @@
             <text class="field-value">{{deviceLabel}}</text>
           </view>
         </picker>
-        <view class="filter-field">
-          <text class="field-name">类型</text>
-          <input class="field-input" placeholder="事件类型" value="{{filters.event_type}}" bindinput="onEventType" confirm-type="search" bindconfirm="reload" />
-        </view>
+        <picker mode="selector" range="{{eventTypeOptions}}" bindchange="onEventType">
+          <view class="filter-field">
+            <text class="field-name">类型</text>
+            <text class="field-value">{{eventTypeLabel}}</text>
+          </view>
+        </picker>
         <picker mode="selector" range="{{readOptions}}" bindchange="onReadStatus">
           <view class="filter-field">
             <text class="field-name">阅读</text>
@@ -38,20 +40,14 @@
         </picker>
         <picker mode="selector" range="{{fileOptions}}" bindchange="onFileStatus">
           <view class="filter-field">
-            <text class="field-name">文件</text>
+            <text class="field-name">录音</text>
             <text class="field-value">{{fileLabel}}</text>
           </view>
         </picker>
-        <picker mode="selector" range="{{pushOptions}}" bindchange="onPushStatus">
+        <picker class="wide-filter" mode="selector" range="{{pushOptions}}" bindchange="onPushStatus">
           <view class="filter-field">
-            <text class="field-name">推送</text>
+            <text class="field-name">通知</text>
             <text class="field-value">{{pushLabel}}</text>
-          </view>
-        </picker>
-        <picker mode="selector" range="{{sizeOptions}}" bindchange="onSize">
-          <view class="filter-field">
-            <text class="field-name">数量</text>
-            <text class="field-value">{{sizeLabel}}</text>
           </view>
         </picker>
       </view>
@@ -92,29 +88,73 @@
 
   <view class="section-head">
     <view class="section-title">事件列表</view>
-    <view class="section-action" bindtap="reload">刷新</view>
+    <view class="section-action" bindtap="refreshCurrentPage">刷新</view>
   </view>
 
-  <loading-view loading="{{loading}}" />
+  <loading-view loading="{{loading && !initialized}}" />
   <block wx:if="{{events.length}}">
     <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" audio-state="{{audioState}}" bind:open="openDetail" bind:play="playAudio" />
-    <view wx:if="{{hasMore}}" class="button secondary load-more" bindtap="loadMore">加载更多</view>
+    <view class="pagination">
+      <view class="pagination-head">
+        <view class="pagination-summary">共 {{total}} 条事件</view>
+        <view class="pagination-current">{{page}} / {{pageTotal}} 页</view>
+      </view>
+      <view class="pagination-nav">
+        <view class="pagination-arrow {{page <= 1 || loading ? 'disabled' : ''}}" bindtap="previousPage">‹</view>
+        <view class="pagination-pages">
+          <block wx:for="{{pageItems}}" wx:key="key">
+            <view wx:if="{{item.ellipsis}}" class="pagination-ellipsis">{{item.label}}</view>
+            <view
+              wx:else
+              class="pagination-page {{item.active ? 'active' : ''}}"
+              data-page="{{item.page}}"
+              bindtap="tapPage"
+            >{{item.label}}</view>
+          </block>
+        </view>
+        <view class="pagination-arrow {{page >= pageTotal || loading ? 'disabled' : ''}}" bindtap="nextPage">›</view>
+      </view>
+      <view class="pagination-jump">
+        <text class="pagination-jump-label">跳至</text>
+        <input
+          class="pagination-input"
+          type="number"
+          maxlength="6"
+          placeholder="输入页码"
+          value="{{pageInput}}"
+          bindinput="onPageInput"
+          confirm-type="go"
+          bindconfirm="jumpToPage"
+        />
+        <text class="pagination-jump-label">页</text>
+        <view class="pagination-jump-button {{loading ? 'disabled' : ''}}" bindtap="jumpToPage">确定</view>
+      </view>
+    </view>
   </block>
-  <empty-state wx:elif="{{!loading}}" title="暂无事件" desc="可调整筛选条件后重试" />
+  <empty-state
+    wx:elif="{{!loading || initialized}}"
+    title="{{loadError ? '事件加载失败' : (filtersActive ? '没有符合条件的事件' : '暂无事件')}}"
+    desc="{{loadError ? '请检查网络连接后重试' : (filtersActive ? '可以清除筛选后查看全部事件' : '设备产生报警后，事件会显示在这里')}}"
+    action-text="{{loadError ? '重新加载' : (filtersActive ? '清除筛选' : '')}}"
+    bind:action="handleEmptyAction"
+  />
 
   <popup-panel visible="{{detailVisible}}" bind:close="closeDetail">
     <view wx:if="{{currentEvent}}" class="detail">
       <view class="detail-handle"></view>
       <view class="detail-title">{{currentEvent.event_type_text || currentEvent.event_type || currentEvent.eventType || '报警事件'}}</view>
       <view class="detail-card">
-        <view class="detail-line"><text>设备</text><text>{{currentEvent.device_id || currentEvent.deviceId}}</text></view>
+        <view class="detail-line"><text>设备</text><text>{{currentEvent.device_name_text}}</text></view>
         <view class="detail-line"><text>信息</text><text>{{currentEvent.alarm_info_text || currentEvent.alarm_info || currentEvent.alarmInfo || '暂无'}}</text></view>
-        <view class="detail-line"><text>文件</text><text>{{currentEvent.file_status || currentEvent.fileStatus}}</text></view>
+        <view class="detail-line"><text>录音</text><text>{{currentEvent.file_status_text}}</text></view>
+        <view class="detail-line"><text>通知</text><text>{{currentEvent.push_status_text}}</text></view>
         <view class="detail-line"><text>时间</text><text>{{currentEvent.event_time || currentEvent.eventTime}}</text></view>
       </view>
       <view class="detail-actions">
-        <view class="button danger" bindtap="deleteEvent">删除事件</view>
-        <view class="button" bindtap="markRead">确认已读</view>
+        <view class="button danger" bindtap="deleteEvent">{{actionLoading ? '处理中...' : '删除事件'}}</view>
+        <view class="button {{currentEvent.read_status === 'READ' || currentEvent.readStatus === 'READ' ? 'secondary' : ''}}" bindtap="markRead">
+          {{actionLoading ? '处理中...' : (currentEvent.read_status === 'READ' || currentEvent.readStatus === 'READ' ? '关闭' : '确认已读')}}
+        </view>
       </view>
     </view>
   </popup-panel>

@@ -13,6 +13,6 @@
   overflow: auto;
   background: #ffffff;
   border-radius: 32rpx 32rpx 0 0;
-  padding: 28rpx 28rpx 42rpx;
+  padding: 28rpx 28rpx calc(42rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }

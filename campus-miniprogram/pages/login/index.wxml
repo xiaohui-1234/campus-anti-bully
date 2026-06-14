@@ -16,7 +16,12 @@
       </view>
     </view>
 
-    <view class="agreement">登录即表示同意 <text>《用户协议》</text> 和 <text>《隐私政策》</text></view>
+    <view class="agreement">
+      登录即表示同意
+      <navigator url="/pages/agreement/index?type=user">《用户协议》</navigator>
+      和
+      <navigator url="/pages/agreement/index?type=privacy">《隐私政策》</navigator>
+    </view>
   </view>
 
   <view wx:if="{{profileVisible}}" class="modal-mask" style="{{modalStyle}}">
@@ -40,16 +45,19 @@
         class="nickname-input"
         type="nickname"
         placeholder="请输入微信名称"
+        maxlength="32"
         value="{{nickname}}"
         bindinput="onNickname"
       />
       <view class="nickname-tip">支持使用微信昵称快捷填写</view>
 
-      <view class="profile-warning">请先完成头像与微信名称填写</view>
+      <view class="profile-warning {{canSubmit ? 'ready' : ''}}">
+        {{canSubmit ? '资料已填写完成' : '请先完成头像与微信名称填写'}}
+      </view>
 
       <view class="dialog-actions">
         <view class="dialog-button cancel" bindtap="closeProfileDialog">取消</view>
-        <view class="dialog-button confirm {{canSubmit ? 'active' : ''}}" bindtap="submit">确定登录</view>
+        <view class="dialog-button confirm {{canSubmit ? 'active' : ''}}" bindtap="submit">{{loading ? '登录中...' : '确定登录'}}</view>
       </view>
     </view>
   </view>

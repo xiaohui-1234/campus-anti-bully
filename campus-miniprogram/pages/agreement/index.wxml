@@ -1,0 +1,27 @@
+<view class="agreement-page">
+  <view class="title">{{title}}</view>
+
+  <block wx:if="{{type === 'user'}}">
+    <view class="updated">更新日期：2026年6月14日</view>
+    <view class="section-title">一、服务说明</view>
+    <view class="paragraph">本小程序用于管理已绑定的校园防霸凌设备，并展示设备在线状态、报警事件和相关音频。</view>
+    <view class="section-title">二、账号与设备</view>
+    <view class="paragraph">你应妥善管理微信账号和一次性设备绑定码。解绑设备后，当前账号将不再接收该设备的报警。</view>
+    <view class="section-title">三、合理使用</view>
+    <view class="paragraph">不得利用本服务干扰设备运行、访问未授权设备，或传播、篡改报警数据。</view>
+    <view class="section-title">四、服务可用性</view>
+    <view class="paragraph">实时报警依赖设备、网络和服务端正常运行。网络恢复后，系统会尝试补齐离线期间的报警事件。</view>
+  </block>
+
+  <block wx:else>
+    <view class="updated">更新日期：2026年6月14日</view>
+    <view class="section-title">一、收集的信息</view>
+    <view class="paragraph">为完成登录和资料展示，我们会处理微信登录凭证、昵称、头像，以及你主动填写的手机号和邮箱。服务端仅保存不可逆处理后的微信身份标识。</view>
+    <view class="section-title">二、设备与报警数据</view>
+    <view class="paragraph">我们会处理你已绑定设备的编号、名称、地点、在线状态、报警事件及报警音频，用于向你提供守护提醒。</view>
+    <view class="section-title">三、信息保护</view>
+    <view class="paragraph">系统不会向小程序返回设备密钥、WiFi 密码或存储服务密钥。访问报警数据前会校验当前账号是否绑定对应设备。</view>
+    <view class="section-title">四、你的选择</view>
+    <view class="paragraph">你可以修改个人资料、解绑设备或退出登录。退出后，小程序会清理当前登录会话并停止接收实时报警。</view>
+  </block>
+</view>

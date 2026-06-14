@@ -25,22 +25,39 @@ function request(options) {
             const retryResult = await request(Object.assign({}, options, { __retry: true }))
             resolve(retryResult)
           } catch (err) {
-            storage.clearTokens()
-            wx.navigateTo({ url: '/pages/login/index' })
+            redirectToLogin()
             reject(err)
           }
           return
         }
         if (body.code !== 0) {
-          wx.showToast({ title: body.message || '请求失败', icon: 'none' })
+          showError(options, body.message || '请求失败')
           reject(body)
           return
         }
         resolve(body.data)
       },
-      fail: reject
+      fail: (err) => {
+        showError(options, '网络连接失败，请稍后重试')
+        reject(err)
+      }
     })
   })
+}
+
+function showError(options, message) {
+  if (options.showError === false) return
+  wx.showToast({ title: message, icon: 'none' })
+}
+
+function redirectToLogin() {
+  const app = typeof getApp === 'function' ? getApp() : null
+  if (app && typeof app.redirectToLogin === 'function') {
+    app.redirectToLogin()
+  } else {
+    storage.clearTokens()
+    wx.reLaunch({ url: '/pages/login/index' })
+  }
 }
 
 function refreshAccessToken() {

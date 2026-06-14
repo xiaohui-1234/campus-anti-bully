@@ -57,8 +57,8 @@ campus:
   mqtt:
     enabled: true
     broker-url: "tcp://47.116.107.124:1883"
-    client-id: "campus-server"
-    username: "root"
+    client-id: "campus-server2"
+    username: "root2"
     password: "@Zyh056610"
     qos: 1
     completion-timeout-ms: 5000

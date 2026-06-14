@@ -1,7 +1,10 @@
 {
   "navigationBarTitleText": "校园防霸凌",
   "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
   "usingComponents": {
-    "loading-view": "../../components/loading-view/index"
+    "loading-view": "../../components/loading-view/index",
+    "empty-state": "../../components/empty-state/index"
   }
 }

@@ -4,33 +4,36 @@
 
 <view class="page" style="{{contentStyle}}">
   <view class="page-title">状态</view>
-  <view class="page-subtitle">基于当前绑定设备和最近事件的轻量统计</view>
-  <loading-view loading="{{loading}}" />
-  <view class="stats">
-    <view class="stat">
-      <view class="stat-icon device"></view>
-      <view class="num">{{stats.deviceTotal}}</view>
-      <view class="label">设备总数</view>
+  <view class="page-subtitle">查看当前设备在线情况与报警概况</view>
+  <loading-view loading="{{loading && !initialized}}" />
+  <empty-state wx:if="{{loadError && !loading}}" title="状态加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
+  <block wx:else>
+    <view class="stats">
+      <view class="stat">
+        <view class="stat-icon device"></view>
+        <view class="num">{{stats.deviceTotal}}</view>
+        <view class="label">设备总数</view>
+      </view>
+      <view class="stat">
+        <view class="stat-icon online"></view>
+        <view class="num">{{stats.onlineTotal}}</view>
+        <view class="label">在线设备</view>
+      </view>
+      <view class="stat">
+        <view class="stat-icon today"></view>
+        <view class="num">{{stats.todayEvents}}</view>
+        <view class="label">今日事件</view>
+      </view>
+      <view class="stat">
+        <view class="stat-icon unread"></view>
+        <view class="num">{{stats.unreadEvents}}</view>
+        <view class="label">未读事件</view>
+      </view>
     </view>
-    <view class="stat">
-      <view class="stat-icon online"></view>
-      <view class="num">{{stats.onlineTotal}}</view>
-      <view class="label">在线设备</view>
-    </view>
-    <view class="stat">
-      <view class="stat-icon today"></view>
-      <view class="num">{{stats.todayEvents}}</view>
-      <view class="label">今日事件</view>
-    </view>
-    <view class="stat">
-      <view class="stat-icon unread"></view>
-      <view class="num">{{stats.unreadEvents}}</view>
-      <view class="label">未读事件</view>
-    </view>
-  </view>
 
-  <view class="panel status-note">
-    <view class="note-title">状态说明</view>
-    <view class="note-text">设备在线状态以 Redis 心跳 TTL 为准；实时事件依赖 WebSocket，离线期间可通过主页补拉。</view>
-  </view>
+    <view class="panel status-note">
+      <view class="note-title">状态说明</view>
+      <view class="note-text">设备在线状态会根据设备心跳自动更新；网络恢复后，离线期间的报警事件会自动补齐。</view>
+    </view>
+  </block>
 </view>

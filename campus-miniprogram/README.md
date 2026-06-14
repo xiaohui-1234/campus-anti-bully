@@ -1,15 +1,16 @@
 # campus-miniprogram
 
-微信小程序端，当前包含登录、首页、事件、设备、状态和个人资料 6 个页面，其中 5 个主业务页面在 tabBar 中展示。
+微信小程序端，当前包含登录、首页、事件、设备、状态、个人资料和协议说明 7 个页面，其中 5 个主业务页面在 tabBar 中展示。
 
 ## 页面
 
 - `pages/login`：微信登录，引导填写头像和昵称。
-- `pages/home`：今日守护首页，显示在线设备数量、待关注事件和最新事件。
-- `pages/events`：事件列表，支持设备、阅读状态、文件状态、推送状态、时间范围筛选；支持播放报警音频、查看详情、标记已读、删除事件。
+- `pages/home`：今日守护首页，显示在线设备数量、未读事件总数、最新事件和实时连接状态。
+- `pages/events`：事件列表，支持设备、事件类型、阅读、录音、通知和时间范围筛选；支持播放报警音频、查看详情、标记已读、删除事件。
 - `pages/devices`：设备列表、绑定设备、编辑设备名称/位置/备注、解绑设备。
 - `pages/status`：设备在线、未读事件等状态汇总。
 - `pages/profile`：个人资料维护、头像上传、退出登录。
+- `pages/agreement`：展示用户协议和隐私政策。
 
 ## 配置
 
@@ -27,7 +28,7 @@ const env = {
 ## 服务封装
 
 - `services/request.js`：统一封装 `wx.request`，自动带 Bearer token，401 时尝试刷新 token。
-- `services/websocket.js`：统一 WebSocket 单连接、重连、订阅设备和离线补拉。
+- `services/websocket.js`：统一 WebSocket 单连接、心跳检测、连接状态、重连、订阅设备和离线补拉。
 - `services/auth-api.js`：微信登录和退出。
 - `services/device-api.js`：设备列表、搜索、绑定、更新和解绑。
 - `services/event-api.js`：事件列表、未拉取事件、标记已读、删除、刷新音频访问 URL。
@@ -46,4 +47,6 @@ const env = {
 - 页面不要直接调用 `wx.request`，统一走 `services/request.js`。
 - WebSocket 只通过 `services/websocket.js` 建立 `/ws/v1/client` 单连接。
 - token 使用 `utils/storage.js` 管理，不在页面里散落保存。
+- 退出登录或鉴权失效时，统一关闭 WebSocket、停止事件轮询并清理页面角标。
+- 主业务页面支持下拉刷新；空状态与加载失败状态提供可执行的下一步操作。
 - 不在前端持久化 openid、设备密钥、JWT 明文日志或 WiFi 密码。

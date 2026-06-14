@@ -5,7 +5,7 @@
         <view class="event-dot {{event.read_status === 'UNREAD' || event.readStatus === 'UNREAD' ? 'hot' : 'read'}}"></view>
         <view class="event-title-main">
           <view class="event-type">{{event.event_type_text || event.event_type || event.eventType || '报警事件'}}</view>
-          <view class="event-device">{{event.device_id || event.deviceId || '未知设备'}}</view>
+          <view class="event-device">{{event.device_name_text || event.device_id || event.deviceId || '未知设备'}}</view>
         </view>
       </view>
       <view class="event-status {{event.read_status === 'UNREAD' || event.readStatus === 'UNREAD' ? 'unread' : 'read'}}">

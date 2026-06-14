@@ -1,12 +1,12 @@
 const request = require('./request')
 
 function unpulled() {
-  return request({ url: '/events/unpulled' })
+  return request({ url: '/events/unpulled', showError: false })
 }
 
-function search(params = {}) {
+function search(params = {}, options = {}) {
   const query = buildQuery(params)
-  return request({ url: `/events/search${query}` })
+  return request({ url: `/events/search${query}`, showError: options.showError })
 }
 
 function markRead(eventId) {
@@ -18,7 +18,10 @@ function remove(eventId) {
 }
 
 async function countUnread() {
-  const data = await search({ read_status: 'UNREAD', page: 1, size: 1 })
+  const data = await request({
+    url: '/events/search?read_status=UNREAD&page=1&size=1',
+    showError: false
+  })
   return data.total || 0
 }
 

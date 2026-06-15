@@ -32,9 +32,10 @@ async function fetchAllPages(fetchPage, options) {
   if (pageTotal <= 1) {
     return { records, total }
   }
-  const rest = await Promise.all(
-    Array.from({ length: pageTotal - 1 }, (_, index) => fetchPage(index + 2, { showError: false }))
-  )
+  const rest = []
+  for (let page = 2; page <= pageTotal; page += 1) {
+    rest.push(await fetchPage(page, { showError: false }))
+  }
   return {
     records: records.concat(...rest.map((item) => item.records || [])),
     total

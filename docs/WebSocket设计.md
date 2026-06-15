@@ -10,13 +10,13 @@ WebSocket 用于向小程序实时推送新事件和设备在线状态。当前�
 
 ## 鉴权
 
-握手支持两种方式：
+握手支持两种方式，客户端应优先使用请求头，避免 token 出现在代理访问日志中：
 
 ```text
 Authorization: Bearer <access_token>
 ```
 
-或：
+查询参数方式仅用于兼容旧客户端：
 
 ```text
 /ws/v1/client?token=<access_token>
@@ -134,7 +134,7 @@ ACK：
 
 ## 小程序行为
 
-- `services/websocket.js` 使用 `env.wsUrl?token=...` 建连。
+- `services/websocket.js` 使用 `Authorization: Bearer <access_token>` 请求头连接 `env.wsUrl`。
 - 建连成功后发送 `SUBSCRIBE_EVENTS`，订阅当前用户已绑定设备。
 - 断线后指数退避重连，重连前尝试刷新 access token。
 - 重连后通过 `/api/v1/events/unpulled` 补拉离线期间未收到的事件。

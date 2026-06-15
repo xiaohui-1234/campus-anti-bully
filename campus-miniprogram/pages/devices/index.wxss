@@ -1,13 +1,40 @@
+.devices-page {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(185, 224, 225, 0.25), transparent 230rpx),
+    #edf2f3;
+}
+
+.page-heading {
+  min-height: 142rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-heading .page-title,
+.page-heading .page-subtitle {
+  position: relative;
+  z-index: 1;
+}
+
+.heading-shield {
+  position: absolute;
+  width: 250rpx;
+  height: 194rpx;
+  right: -12rpx;
+  top: -20rpx;
+  opacity: 0.58;
+}
+
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 112rpx 172rpx;
   gap: 14rpx;
   margin-bottom: 24rpx;
   background: #ffffff;
-  border-radius: 24rpx;
-  padding: 18rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.035);
-  border: 1rpx solid #edf2ef;
+  border-radius: 30rpx;
+  padding: 20rpx;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  border: 1rpx solid #eef3f2;
 }
 
 .toolbar-searching {
@@ -17,6 +44,31 @@
 .search-button,
 .add-button {
   height: 84rpx;
+  gap: 8rpx;
+}
+
+.toolbar-search-icon {
+  width: 34rpx;
+  height: 34rpx;
+  flex: 0 0 auto;
+}
+
+.search-button image,
+.add-button image {
+  width: 29rpx;
+  height: 29rpx;
+  flex: 0 0 auto;
+}
+
+.refresh-action {
+  display: flex;
+  align-items: center;
+  gap: 7rpx;
+}
+
+.refresh-action image {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .form-input {

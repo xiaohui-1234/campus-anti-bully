@@ -12,7 +12,8 @@
   max-height: 78vh;
   overflow: auto;
   background: #ffffff;
-  border-radius: 32rpx 32rpx 0 0;
-  padding: 28rpx 28rpx calc(42rpx + env(safe-area-inset-bottom));
+  border-radius: 38rpx 38rpx 0 0;
+  padding: 32rpx 30rpx calc(42rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
+  box-shadow: 0 -18rpx 50rpx rgba(35, 59, 65, 0.12);
 }

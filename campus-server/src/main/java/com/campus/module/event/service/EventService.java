@@ -62,6 +62,14 @@ public class EventService {
         return events.stream().map(event -> toVO(event, bound.deviceMap().get(event.getDeviceTableId()))).toList();
     }
 
+    public EventVO detail(String eventId) {
+        LoginUser loginUser = SecurityContextUtil.currentUser();
+        Event event = findByEventId(eventId);
+        deviceService.ensureUserBoundDevice(loginUser.getUserTableId(), event.getDeviceTableId());
+        Device device = deviceService.listDeviceMapByIds(List.of(event.getDeviceTableId())).get(event.getDeviceTableId());
+        return toVO(event, device);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void markRead(String eventId) {
         LoginUser loginUser = SecurityContextUtil.currentUser();

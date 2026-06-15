@@ -9,6 +9,10 @@ function search(params = {}, options = {}) {
   return request({ url: `/events/search${query}`, showError: options.showError })
 }
 
+function get(eventId, options = {}) {
+  return request({ url: `/events/${encodeURIComponent(eventId)}`, showError: options.showError })
+}
+
 function markRead(eventId) {
   return request({ url: `/events/${eventId}/read`, method: 'PUT' })
 }
@@ -43,6 +47,7 @@ function buildQuery(params) {
 module.exports = {
   unpulled,
   search,
+  get,
   countUnread,
   markRead,
   remove,

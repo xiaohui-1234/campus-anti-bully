@@ -279,6 +279,14 @@ GET /api/v1/events/search
 }
 ```
 
+### 获取事件详情
+
+```text
+GET /api/v1/events/{event_id}
+```
+
+仅在当前用户已绑定事件所属设备时返回事件详情。
+
 ### 标记已读
 
 ```text

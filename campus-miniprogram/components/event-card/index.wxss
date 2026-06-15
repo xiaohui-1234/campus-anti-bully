@@ -1,9 +1,9 @@
 .event-card {
   background: #ffffff;
-  border-radius: 22rpx;
+  border-radius: 28rpx;
   margin-bottom: 18rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.045);
-  border: 1rpx solid #edf2ef;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  border: 1rpx solid #eef3f2;
   overflow: hidden;
 }
 
@@ -60,6 +60,22 @@
   margin-top: 8rpx;
   font-size: 24rpx;
   color: #7c8b8d;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.event-device text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-mini-icon {
+  width: 27rpx;
+  height: 27rpx;
+  flex: 0 0 auto;
 }
 
 .event-status {
@@ -90,6 +106,21 @@
   color: #3f5053;
   font-size: 28rpx;
   line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.event-info-icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-top: 6rpx;
+  flex: 0 0 auto;
+}
+
+.event-info text {
+  min-width: 0;
+  flex: 1;
 }
 
 .event-meta {
@@ -104,6 +135,9 @@
 
 .file-status {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .file-status.ready {
@@ -116,17 +150,31 @@
 
 .event-time {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10rpx;
+}
+
+.event-time text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.event-meta-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex: 0 0 auto;
 }
 
 .event-actions {
   border-top: 1rpx solid #edf2ef;
   padding: 16rpx 20rpx 18rpx;
   display: grid;
-  grid-template-columns: 1fr 128rpx;
-  gap: 14rpx;
+  grid-template-columns: 1fr 154rpx;
+  gap: 12rpx;
   align-items: center;
 }
 
@@ -218,7 +266,22 @@
   right: 0;
 }
 
+.play-icon-image {
+  width: 25rpx;
+  height: 25rpx;
+  flex: 0 0 auto;
+}
+
 .detail-link {
-  background: #f6f8f7;
-  color: #56676a;
+  background: #f1f7f6;
+  color: #58777a;
+  border: 1rpx solid #e0ecea;
+  gap: 9rpx;
+  font-weight: 600;
+}
+
+.detail-icon-image {
+  width: 27rpx;
+  height: 27rpx;
+  flex: 0 0 auto;
 }

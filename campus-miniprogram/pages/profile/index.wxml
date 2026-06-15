@@ -2,43 +2,94 @@
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page" style="{{contentStyle}}">
-  <view class="page-title">个人</view>
-  <view class="page-subtitle">管理登录资料、联系方式和账号状态</view>
+<view class="page profile-page" style="{{contentStyle}}">
+  <view class="profile-heading">
+    <view class="page-title">个人</view>
+    <view class="page-subtitle">管理登录资料、联系方式和账号状态</view>
+    <image class="heading-shield" src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+  </view>
+
   <loading-view loading="{{loading && !initialized}}" />
   <empty-state wx:if="{{loadError && !loading && !form.user_id && !form.userId}}" title="资料加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
   <block wx:else>
   <view class="profile-card">
-    <image wx:if="{{form.avatar_url || form.avatarUrl}}" class="avatar" src="{{form.avatar_url || form.avatarUrl}}" mode="aspectFill"></image>
-    <view wx:else class="avatar avatar-empty">我</view>
+    <view class="profile-card-glow one"></view>
+    <view class="profile-card-glow two"></view>
+    <view class="avatar-wrap">
+      <image wx:if="{{form.avatar_url || form.avatarUrl}}" class="avatar" src="{{form.avatar_url || form.avatarUrl}}" mode="aspectFill"></image>
+      <view wx:else class="avatar avatar-empty">我</view>
+      <view class="avatar-status">
+        <image src="../../assets/icons/profile/check-green.png" mode="aspectFit"></image>
+      </view>
+    </view>
     <view class="profile-info">
       <view class="name">{{form.nickname || '未登录'}}</view>
-      <view class="role">{{roleLabel}} · {{form.user_id || form.userId || '未获取用户编号'}}</view>
+      <view class="role-pill">
+        <image src="../../assets/icons/profile/role-white.png" mode="aspectFit"></image>
+        <text>{{roleLabel}}</text>
+      </view>
+      <view class="user-id">用户ID：{{form.user_id || form.userId || '未获取用户编号'}}</view>
     </view>
   </view>
 
-  <view class="panel form">
-    <view class="form-title">基础资料</view>
-    <input class="input form-input" placeholder="昵称" maxlength="32" value="{{form.nickname}}" bindinput="onNickname" />
-    <input class="input form-input" type="number" placeholder="手机号（选填）" maxlength="11" value="{{form.phone}}" bindinput="onPhone" />
-    <input class="input form-input" placeholder="邮箱（选填）" maxlength="100" value="{{form.email}}" bindinput="onEmail" />
-    <view class="button {{formDirty ? '' : 'secondary'}}" bindtap="saveProfile">
-      {{actionLoading ? '保存中...' : (formDirty ? '保存资料' : '资料未修改')}}
+  <view class="panel form-card">
+    <view class="card-title">
+      <image src="../../assets/icons/profile/id-card-teal.png" mode="aspectFit"></image>
+      <text>基础资料</text>
+    </view>
+    <view class="form-sheet">
+      <view class="form-row">
+        <image class="form-row-icon" src="../../assets/icons/profile/user-cyan.png" mode="aspectFit"></image>
+        <text class="form-label">昵称</text>
+        <input class="form-value" placeholder="未填写" placeholder-class="form-placeholder" maxlength="32" value="{{form.nickname}}" bindinput="onNickname" />
+      </view>
+      <view class="form-row">
+        <image class="form-row-icon" src="../../assets/icons/profile/phone-purple.png" mode="aspectFit"></image>
+        <text class="form-label">手机号</text>
+        <input class="form-value" type="number" placeholder="未填写" placeholder-class="form-placeholder" maxlength="11" value="{{form.phone}}" bindinput="onPhone" />
+      </view>
+      <view class="form-row">
+        <image class="form-row-icon" src="../../assets/icons/profile/mail-orange.png" mode="aspectFit"></image>
+        <text class="form-label">邮箱</text>
+        <input class="form-value" placeholder="未填写" placeholder-class="form-placeholder" maxlength="100" value="{{form.email}}" bindinput="onEmail" />
+      </view>
+    </view>
+    <view class="profile-save {{formDirty ? 'dirty' : ''}}" bindtap="saveProfile">
+      <image src="../../assets/icons/profile/check-green.png" mode="aspectFit"></image>
+      <text>{{actionLoading ? '保存中...' : (formDirty ? '保存资料' : '资料未修改')}}</text>
     </view>
   </view>
 
   <view class="panel action-list">
     <view class="action-item" bindtap="chooseAvatar">
-      <text>上传头像</text>
-      <text class="arrow">›</text>
+      <view class="action-main">
+        <image class="action-icon" src="../../assets/icons/profile/upload-blue.png" mode="aspectFit"></image>
+        <text>上传头像</text>
+      </view>
+      <view class="action-side">
+        <text>更换个人头像</text>
+        <text class="arrow">›</text>
+      </view>
     </view>
     <view class="action-item" bindtap="login">
-      <text>切换账号</text>
-      <text class="arrow">›</text>
+      <view class="action-main">
+        <image class="action-icon" src="../../assets/icons/profile/switch-purple.png" mode="aspectFit"></image>
+        <text>切换账号</text>
+      </view>
+      <view class="action-side">
+        <text>切换其他账号登录</text>
+        <text class="arrow">›</text>
+      </view>
     </view>
     <view class="action-item danger-text" bindtap="logout">
-      <text>{{actionLoading ? '正在退出...' : '退出登录'}}</text>
-      <text class="arrow">›</text>
+      <view class="action-main">
+        <image class="action-icon" src="../../assets/icons/profile/logout-red.png" mode="aspectFit"></image>
+        <text>{{actionLoading ? '正在退出...' : '退出登录'}}</text>
+      </view>
+      <view class="action-side">
+        <text>退出当前账号</text>
+        <text class="arrow">›</text>
+      </view>
     </view>
   </view>
   </block>

@@ -2,22 +2,34 @@
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page" style="{{contentStyle}}">
-  <view class="page-title">设备</view>
-  <view class="page-subtitle">管理已绑定设备，查看在线状态并维护地点备注</view>
+<view class="page devices-page" style="{{contentStyle}}">
+  <view class="page-heading">
+    <view class="page-title">设备</view>
+    <view class="page-subtitle">管理已绑定设备，查看在线状态并维护地点备注</view>
+    <image class="heading-shield" src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+  </view>
 
   <view class="toolbar {{search_active || keyword ? 'toolbar-searching' : ''}}">
     <view class="search-bar">
-      <view class="search-icon"></view>
+      <image class="toolbar-search-icon" src="../../assets/icons/event/search-gray.png" mode="aspectFit"></image>
       <input class="search-input" placeholder="搜索设备名称、地点或编号" value="{{keyword}}" bindinput="onKeyword" bindfocus="onSearchFocus" bindblur="onSearchBlur" confirm-type="search" bindconfirm="reload" />
     </view>
-    <view class="button search-button" bindtap="reload">搜索</view>
-    <view wx:if="{{!search_active && !keyword}}" class="button add-button" bindtap="openBind">添加设备</view>
+    <view class="button search-button" bindtap="reload">
+      <image src="../../assets/icons/event/search-white.png" mode="aspectFit"></image>
+      <text>搜索</text>
+    </view>
+    <view wx:if="{{!search_active && !keyword}}" class="button add-button" bindtap="openBind">
+      <image src="../../assets/icons/shared/plus-white.png" mode="aspectFit"></image>
+      <text>添加设备</text>
+    </view>
   </view>
 
   <view class="section-head">
     <view class="section-title">我的设备</view>
-    <view class="section-action" bindtap="reload">刷新</view>
+    <view class="section-action refresh-action" bindtap="reload">
+      <image src="../../assets/icons/event/refresh-teal.png" mode="aspectFit"></image>
+      <text>刷新</text>
+    </view>
   </view>
 
   <loading-view loading="{{loading && !initialized}}" />

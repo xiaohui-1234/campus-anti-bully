@@ -52,7 +52,7 @@ Page({
   onLoad(options) {
     getApp().setNavLayout(this)
     if (options.event_id) {
-      this.setData({ filters: { keyword: options.event_id } })
+      this.pendingEventId = options.event_id
     }
     this.loadDevices()
   },
@@ -198,9 +198,7 @@ Page({
       events: (data.records || []).map((item) => this.formatEvent(item))
     }
     this.setData(updates)
-    if (page === 1) {
-      this.openPendingEvent()
-    }
+    await this.openPendingEvent()
   },
   buildPageItems(page, pageTotal) {
     const pages = pageTotal <= 7
@@ -378,11 +376,20 @@ Page({
       device_name_text: device && (device.device_name || device.deviceName) || deviceId || '未知设备'
     })
   },
-  openPendingEvent() {
-    const pendingEvent = getApp().consumePendingEvent()
-    if (!pendingEvent) return
-    const pendingId = pendingEvent.event_id || pendingEvent.eventId
+  async openPendingEvent() {
+    let pendingEvent = getApp().consumePendingEvent()
+    const pendingId = pendingEvent && (pendingEvent.event_id || pendingEvent.eventId) || this.pendingEventId
+    if (!pendingId) return
+    this.pendingEventId = ''
     const matched = this.data.events.find((item) => (item.event_id || item.eventId) === pendingId)
+    if (!matched) {
+      try {
+        pendingEvent = await eventApi.get(pendingId, { showError: false })
+      } catch (err) {
+        wx.showToast({ title: '事件不存在或无权访问', icon: 'none' })
+        return
+      }
+    }
     this.setData({
       currentEvent: this.formatDetailEvent(matched || pendingEvent),
       detailVisible: true

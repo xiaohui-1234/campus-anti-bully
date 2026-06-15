@@ -1,10 +1,10 @@
 .device-card {
   background: #ffffff;
-  border-radius: 22rpx;
-  padding: 26rpx;
+  border-radius: 28rpx;
+  padding: 28rpx;
   margin-bottom: 18rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.045);
-  border: 1rpx solid #edf2ef;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  border: 1rpx solid #eef3f2;
 }
 
 .device-main {
@@ -14,9 +14,9 @@
 }
 
 .device-icon {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 20rpx;
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 23rpx;
   background: #eef4f2;
   display: flex;
   align-items: center;
@@ -28,16 +28,9 @@
   background: #e7f4ed;
 }
 
-.device-icon-inner {
-  width: 30rpx;
-  height: 42rpx;
-  border-radius: 10rpx;
-  border: 4rpx solid #7c8b8d;
-  box-sizing: border-box;
-}
-
-.device-icon.online .device-icon-inner {
-  border-color: #2f9e68;
+.device-icon image {
+  width: 39rpx;
+  height: 39rpx;
 }
 
 .device-body {
@@ -92,6 +85,21 @@
 
 .device-note,
 .device-time {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.device-note image,
+.device-time image {
+  width: 25rpx;
+  height: 25rpx;
+  flex: 0 0 auto;
+}
+
+.device-note text,
+.device-time text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

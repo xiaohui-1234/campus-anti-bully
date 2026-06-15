@@ -38,7 +38,7 @@ Component({
   },
   data: {
     readText: '未读',
-    fileText: '上传成功',
+    fileText: '录音状态未知',
     canPlay: false,
     isPlaying: false,
     playProgress: 0,
@@ -52,7 +52,7 @@ Component({
         SUCCESS: '上传成功',
         FAILED: '上传失败'
       }
-      return labels[status] || '上传成功'
+      return labels[status] || '录音状态未知'
     },
     handleTap() {
       this.triggerEvent('open', this.properties.event)

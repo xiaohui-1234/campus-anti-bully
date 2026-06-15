@@ -3,9 +3,9 @@
   text-align: center;
   color: #7c8b8d;
   background: #ffffff;
-  border-radius: 22rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.04);
-  border: 1rpx solid #edf2ef;
+  border-radius: 28rpx;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.1);
+  border: 1rpx solid #eef3f2;
 }
 
 .empty-title {

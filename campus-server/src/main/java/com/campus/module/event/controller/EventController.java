@@ -35,6 +35,11 @@ public class EventController {
         return ApiResult.success(eventService.unpulled());
     }
 
+    @GetMapping("/{eventId}")
+    public ApiResult<EventVO> detail(@PathVariable String eventId) {
+        return ApiResult.success(eventService.detail(eventId));
+    }
+
     @PutMapping("/{eventId}/read")
     public ApiResult<Void> markRead(@PathVariable String eventId) {
         eventService.markRead(eventId);

@@ -1,3 +1,30 @@
+.status-page {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(185, 224, 225, 0.25), transparent 230rpx),
+    #edf2f3;
+}
+
+.page-heading {
+  min-height: 142rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-heading .page-title,
+.page-heading .page-subtitle {
+  position: relative;
+  z-index: 1;
+}
+
+.heading-shield {
+  position: absolute;
+  width: 250rpx;
+  height: 194rpx;
+  right: -12rpx;
+  top: -20rpx;
+  opacity: 0.58;
+}
+
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -6,20 +33,23 @@
 
 .stat {
   background: #ffffff;
-  border-radius: 22rpx;
+  border-radius: 28rpx;
   min-height: 200rpx;
-  padding: 26rpx;
+  padding: 28rpx;
   box-sizing: border-box;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.045);
-  border: 1rpx solid #edf2ef;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  border: 1rpx solid #eef3f2;
 }
 
 .stat-icon {
-  width: 44rpx;
-  height: 44rpx;
-  border-radius: 14rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
   background: #e8f4f3;
   margin-bottom: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stat-icon.online {
@@ -32,6 +62,11 @@
 
 .stat-icon.unread {
   background: #fff0ee;
+}
+
+.stat-icon image {
+  width: 35rpx;
+  height: 35rpx;
 }
 
 .num {
@@ -48,12 +83,22 @@
 
 .status-note {
   margin-top: 24rpx;
+  border-radius: 28rpx;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
 }
 
 .note-title {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   font-size: 30rpx;
   font-weight: 800;
   color: #1d2b2f;
+}
+
+.note-title image {
+  width: 34rpx;
+  height: 34rpx;
 }
 
 .note-text {

@@ -5,7 +5,10 @@
         <view class="event-dot {{event.read_status === 'UNREAD' || event.readStatus === 'UNREAD' ? 'hot' : 'read'}}"></view>
         <view class="event-title-main">
           <view class="event-type">{{event.event_type_text || event.event_type || event.eventType || '报警事件'}}</view>
-          <view class="event-device">{{event.device_name_text || event.device_id || event.deviceId || '未知设备'}}</view>
+          <view class="event-device">
+            <image class="event-mini-icon" src="../../assets/icons/event/device-gray.png" mode="aspectFit"></image>
+            <text>{{event.device_name_text || event.device_id || event.deviceId || '未知设备'}}</text>
+          </view>
         </view>
       </view>
       <view class="event-status {{event.read_status === 'UNREAD' || event.readStatus === 'UNREAD' ? 'unread' : 'read'}}">
@@ -13,11 +16,20 @@
       </view>
     </view>
 
-    <view class="event-info">{{event.alarm_info_text || event.alarm_info || event.alarmInfo || '暂无报警信息'}}</view>
+    <view class="event-info">
+      <image class="event-info-icon" src="../../assets/icons/event/speaker-gray.png" mode="aspectFit"></image>
+      <text>{{event.alarm_info_text || event.alarm_info || event.alarmInfo || '暂无报警信息'}}</text>
+    </view>
 
     <view class="event-meta">
-      <text class="file-status {{canPlay ? 'ready' : 'pending'}}">{{fileText}}</text>
-      <text class="event-time">{{event.event_time || event.eventTime}}</text>
+      <view class="file-status {{canPlay ? 'ready' : 'pending'}}">
+        <image class="event-meta-icon" src="../../assets/icons/event/upload-gray.png" mode="aspectFit"></image>
+        <text>{{fileText}}</text>
+      </view>
+      <view class="event-time">
+        <image class="event-meta-icon" src="../../assets/icons/event/clock-gray.png" mode="aspectFit"></image>
+        <text>{{event.event_time || event.eventTime}}</text>
+      </view>
     </view>
   </view>
 
@@ -25,10 +37,19 @@
     <view class="play-button {{canPlay ? '' : 'disabled'}} {{isPlaying ? 'playing' : ''}}" catchtap="handlePlay">
       <view class="play-progress" style="{{progressStyle}}"></view>
       <view class="play-content">
-        <view class="play-icon {{isPlaying ? 'pause' : ''}}"></view>
+        <view wx:if="{{isPlaying}}" class="play-icon pause"></view>
+        <image
+          wx:else
+          class="play-icon-image"
+          src="{{canPlay ? '../../assets/icons/event/play-teal.png' : '../../assets/icons/event/play-gray.png'}}"
+          mode="aspectFit"
+        ></image>
         <text>{{playText}}</text>
       </view>
     </view>
-    <view class="detail-link" bindtap="handleTap">详情</view>
+    <view class="detail-link" bindtap="handleTap">
+      <image class="detail-icon-image" src="../../assets/icons/event/info-teal.png" mode="aspectFit"></image>
+      <text>详情</text>
+    </view>
   </view>
 </view>

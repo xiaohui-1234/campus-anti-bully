@@ -1,9 +1,40 @@
 .agreement-page {
   min-height: 100vh;
   padding: 40rpx 32rpx calc(60rpx + env(safe-area-inset-bottom));
-  background: #f5f7f6;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(185, 224, 225, 0.28), transparent 260rpx),
+    #edf2f3;
   box-sizing: border-box;
   color: #263238;
+}
+
+.agreement-heading {
+  min-height: 160rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.agreement-heading .title,
+.agreement-heading .updated {
+  position: relative;
+  z-index: 1;
+}
+
+.agreement-heading image {
+  position: absolute;
+  width: 250rpx;
+  height: 194rpx;
+  right: -12rpx;
+  top: -30rpx;
+  opacity: 0.58;
+}
+
+.agreement-card {
+  padding: 30rpx;
+  border-radius: 30rpx;
+  background: #ffffff;
+  border: 1rpx solid #eef3f2;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
 }
 
 .title {
@@ -13,7 +44,7 @@
 }
 
 .updated {
-  margin: 12rpx 0 36rpx;
+  margin-top: 12rpx;
   color: #7c8b8d;
   font-size: 24rpx;
 }
@@ -23,6 +54,10 @@
   color: #1d2b2f;
   font-size: 30rpx;
   font-weight: 700;
+}
+
+.agreement-card .section-title:first-child {
+  margin-top: 0;
 }
 
 .paragraph {

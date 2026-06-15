@@ -1,8 +1,12 @@
 <view class="agreement-page">
-  <view class="title">{{title}}</view>
-
-  <block wx:if="{{type === 'user'}}">
+  <view class="agreement-heading">
+    <view class="title">{{title}}</view>
     <view class="updated">更新日期：2026年6月14日</view>
+    <image src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+  </view>
+
+  <view class="agreement-card">
+  <block wx:if="{{type === 'user'}}">
     <view class="section-title">一、服务说明</view>
     <view class="paragraph">本小程序用于管理已绑定的校园防霸凌设备，并展示设备在线状态、报警事件和相关音频。</view>
     <view class="section-title">二、账号与设备</view>
@@ -14,7 +18,6 @@
   </block>
 
   <block wx:else>
-    <view class="updated">更新日期：2026年6月14日</view>
     <view class="section-title">一、收集的信息</view>
     <view class="paragraph">为完成登录和资料展示，我们会处理微信登录凭证、昵称、头像，以及你主动填写的手机号和邮箱。服务端仅保存不可逆处理后的微信身份标识。</view>
     <view class="section-title">二、设备与报警数据</view>
@@ -24,4 +27,5 @@
     <view class="section-title">四、你的选择</view>
     <view class="paragraph">你可以修改个人资料、解绑设备或退出登录。退出后，小程序会清理当前登录会话并停止接收实时报警。</view>
   </block>
+  </view>
 </view>

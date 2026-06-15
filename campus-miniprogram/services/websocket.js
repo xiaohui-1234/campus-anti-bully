@@ -20,10 +20,18 @@ function connect() {
   if (!token || socketTask) return
   manualClose = false
   setStatus('CONNECTING')
-  socketTask = wx.connectSocket({
-    url: `${env.wsUrl}?token=${encodeURIComponent(token)}`
+  const task = wx.connectSocket({
+    url: env.wsUrl,
+    header: {
+      Authorization: `Bearer ${token}`
+    }
   })
-  socketTask.onOpen(() => {
+  socketTask = task
+  task.onOpen(() => {
+    if (task !== socketTask || manualClose) {
+      task.close()
+      return
+    }
     connected = true
     reconnectCount = 0
     setStatus('CONNECTED')
@@ -32,7 +40,8 @@ function connect() {
       sendSubscription()
     }
   })
-  socketTask.onMessage((message) => {
+  task.onMessage((message) => {
+    if (task !== socketTask) return
     let body
     try {
       body = JSON.parse(message.data || '{}')
@@ -53,16 +62,25 @@ function connect() {
     }
     callbacks.forEach((callback) => callback(data))
   })
-  socketTask.onClose(() => {
+  task.onClose(() => {
+    if (task !== socketTask) return
     connected = false
     socketTask = null
     stopHeartbeat()
     setStatus(manualClose ? 'OFFLINE' : 'RECONNECTING')
     if (!manualClose) reconnect()
   })
-  socketTask.onError(() => {
+  task.onError(() => {
+    if (task !== socketTask) return
     connected = false
+    socketTask = null
+    stopHeartbeat()
     setStatus('RECONNECTING')
+    try {
+      task.close()
+    } catch (err) {
+    }
+    if (!manualClose) reconnect()
   })
 }
 
@@ -70,10 +88,11 @@ function close() {
   manualClose = true
   clearTimeout(reconnectTimer)
   stopHeartbeat()
-  if (socketTask) {
-    socketTask.close()
-  }
+  const task = socketTask
   socketTask = null
+  if (task) {
+    task.close()
+  }
   connected = false
   subscribedDeviceIds = []
   setStatus('OFFLINE')

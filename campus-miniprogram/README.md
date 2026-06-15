@@ -46,7 +46,7 @@ const env = {
 
 - 页面不要直接调用 `wx.request`，统一走 `services/request.js`。
 - WebSocket 只通过 `services/websocket.js` 建立 `/ws/v1/client` 单连接。
-- token 使用 `utils/storage.js` 管理，不在页面里散落保存。
+- token 使用 `utils/storage.js` 在当前小程序进程内管理，不持久化明文 JWT。
 - 退出登录或鉴权失效时，统一关闭 WebSocket、停止事件轮询并清理页面角标。
 - 主业务页面支持下拉刷新；空状态与加载失败状态提供可执行的下一步操作。
 - 不在前端持久化 openid、设备密钥、JWT 明文日志或 WiFi 密码。

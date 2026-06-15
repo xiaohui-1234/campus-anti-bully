@@ -8,7 +8,8 @@
       <view class="page-title">今日守护</view>
       <view class="page-subtitle">实时同步已绑定设备的报警与在线状态</view>
     </view>
-    <view class="header-badge">在线 {{onlineTotal}}</view>
+    <image class="home-heading-shield" src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+    <view class="header-badge"><view class="badge-dot"></view>在线 {{onlineTotal}}</view>
   </view>
 
   <view class="hero">
@@ -25,21 +26,34 @@
 
   <view class="summary">
     <view class="summary-item">
-      <view class="summary-mark bind"></view>
+      <view class="summary-mark bind">
+        <image src="../../assets/icons/shared/device-teal.png" mode="aspectFit"></image>
+      </view>
       <view class="num">{{devices.length}}</view>
       <view class="label">已绑定</view>
     </view>
     <view class="summary-item">
-      <view class="summary-mark event"></view>
+      <view class="summary-mark event">
+        <image src="../../assets/icons/shared/bell-red.png" mode="aspectFit"></image>
+      </view>
       <view class="num">{{pendingTotal}}</view>
       <view class="label">待关注</view>
     </view>
   </view>
 
   <view class="quick-actions">
-    <navigator url="/pages/devices/index" open-type="switchTab" class="quick-action">管理设备</navigator>
-    <navigator url="/pages/events/index" open-type="switchTab" class="quick-action">查看事件</navigator>
-    <navigator url="/pages/profile/index" open-type="switchTab" class="quick-action">个人资料</navigator>
+    <navigator url="/pages/devices/index" open-type="switchTab" class="quick-action">
+      <image src="../../assets/icons/shared/device-teal.png" mode="aspectFit"></image>
+      <text>管理设备</text>
+    </navigator>
+    <navigator url="/pages/events/index" open-type="switchTab" class="quick-action">
+      <image src="../../assets/icons/shared/bell-red.png" mode="aspectFit"></image>
+      <text>查看事件</text>
+    </navigator>
+    <navigator url="/pages/profile/index" open-type="switchTab" class="quick-action">
+      <image src="../../assets/icons/shared/profile-purple.png" mode="aspectFit"></image>
+      <text>个人资料</text>
+    </navigator>
   </view>
 
   <view class="section-head">

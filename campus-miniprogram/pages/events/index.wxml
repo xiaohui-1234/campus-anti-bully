@@ -2,17 +2,21 @@
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page" style="{{contentStyle}}">
-  <view class="page-title">事件</view>
-  <view class="page-subtitle">筛选、查看详情、标记已读和播放报警音频</view>
+<view class="page events-page" style="{{contentStyle}}">
+  <view class="page-heading">
+    <view class="page-title">事件</view>
+    <view class="page-subtitle">筛选、查看详情、标记已读和播放报警音频</view>
+    <image class="heading-shield" src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+  </view>
 
   <view class="filters">
     <view class="filter-top">
       <view class="search-bar">
-        <view class="search-icon"></view>
+        <image class="event-search-icon" src="../../assets/icons/event/search-gray.png" mode="aspectFit"></image>
         <input class="search-input" placeholder="搜索报警信息" value="{{filters.keyword}}" bindinput="onKeyword" confirm-type="search" bindconfirm="reload" />
       </view>
       <view class="filter-toggle" bindtap="toggleFilters">
+        <image class="filter-icon-image" src="../../assets/icons/event/filter-teal.png" mode="aspectFit"></image>
         <text>{{filtersExpanded ? '收起' : '筛选'}}</text>
         <text class="toggle-arrow {{filtersExpanded ? 'is-open' : ''}}">⌄</text>
       </view>
@@ -82,25 +86,30 @@
 
     <view class="filter-actions">
       <view class="button secondary filter-button" bindtap="resetFilters">重置</view>
-      <view class="button filter-button" bindtap="reload">查询</view>
+      <view class="button filter-button query-button" bindtap="reload">
+        <image class="query-icon-image" src="../../assets/icons/event/search-white.png" mode="aspectFit"></image>
+        <text>查询</text>
+      </view>
     </view>
   </view>
 
   <view class="section-head">
     <view class="section-title">事件列表</view>
-    <view class="section-action" bindtap="refreshCurrentPage">刷新</view>
+    <view class="section-action refresh-action" bindtap="refreshCurrentPage">
+      <image class="refresh-icon-image" src="../../assets/icons/event/refresh-teal.png" mode="aspectFit"></image>
+      <text>刷新</text>
+    </view>
   </view>
 
   <loading-view loading="{{loading && !initialized}}" />
   <block wx:if="{{events.length}}">
     <event-card wx:for="{{events}}" wx:key="event_id" event="{{item}}" audio-state="{{audioState}}" bind:open="openDetail" bind:play="playAudio" />
     <view class="pagination">
-      <view class="pagination-head">
-        <view class="pagination-summary">共 {{total}} 条事件</view>
-        <view class="pagination-current">{{page}} / {{pageTotal}} 页</view>
-      </view>
       <view class="pagination-nav">
-        <view class="pagination-arrow {{page <= 1 || loading ? 'disabled' : ''}}" bindtap="previousPage">‹</view>
+        <view class="pagination-step {{page <= 1 || loading ? 'disabled' : ''}}" bindtap="previousPage">
+          <text class="pagination-step-arrow">‹</text>
+          <text>上一页</text>
+        </view>
         <view class="pagination-pages">
           <block wx:for="{{pageItems}}" wx:key="key">
             <view wx:if="{{item.ellipsis}}" class="pagination-ellipsis">{{item.label}}</view>
@@ -112,22 +121,30 @@
             >{{item.label}}</view>
           </block>
         </view>
-        <view class="pagination-arrow {{page >= pageTotal || loading ? 'disabled' : ''}}" bindtap="nextPage">›</view>
+        <view class="pagination-step next {{page >= pageTotal || loading ? 'disabled' : ''}}" bindtap="nextPage">
+          <text>下一页</text>
+          <text class="pagination-step-arrow">›</text>
+        </view>
       </view>
-      <view class="pagination-jump">
-        <text class="pagination-jump-label">跳至</text>
-        <input
-          class="pagination-input"
-          type="number"
-          maxlength="6"
-          placeholder="输入页码"
-          value="{{pageInput}}"
-          bindinput="onPageInput"
-          confirm-type="go"
-          bindconfirm="jumpToPage"
-        />
-        <text class="pagination-jump-label">页</text>
-        <view class="pagination-jump-button {{loading ? 'disabled' : ''}}" bindtap="jumpToPage">确定</view>
+      <view class="pagination-footer">
+        <view class="pagination-summary">共 <text>{{total}}</text> 条事件</view>
+        <view class="pagination-jump">
+          <text class="pagination-jump-label">跳至</text>
+          <view class="pagination-jump-control">
+            <input
+              class="pagination-input"
+              type="number"
+              maxlength="6"
+              placeholder="{{page}}"
+              value="{{pageInput}}"
+              bindinput="onPageInput"
+              confirm-type="go"
+              bindconfirm="jumpToPage"
+            />
+          </view>
+          <text class="pagination-input-suffix">页</text>
+          <view class="pagination-jump-button {{loading ? 'disabled' : ''}}" bindtap="jumpToPage">前往</view>
+        </view>
       </view>
     </view>
   </block>

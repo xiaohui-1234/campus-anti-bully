@@ -1,8 +1,32 @@
+.home-page {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(185, 224, 225, 0.25), transparent 230rpx),
+    #edf2f3;
+}
+
 .home-header {
+  min-height: 142rpx;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20rpx;
+}
+
+.home-header > view:first-child,
+.header-badge {
+  position: relative;
+  z-index: 1;
+}
+
+.home-heading-shield {
+  position: absolute;
+  width: 250rpx;
+  height: 194rpx;
+  right: -12rpx;
+  top: -20rpx;
+  opacity: 0.58;
 }
 
 .header-badge {
@@ -16,12 +40,22 @@
   align-items: center;
   font-size: 24rpx;
   flex: 0 0 auto;
+  gap: 8rpx;
+}
+
+.badge-dot {
+  width: 11rpx;
+  height: 11rpx;
+  border-radius: 50%;
+  background: #58b37b;
 }
 
 .hero {
+  position: relative;
+  overflow: hidden;
   min-height: 230rpx;
-  background: #0f8b8d;
-  border-radius: 30rpx;
+  background: linear-gradient(135deg, #5a999d 0%, #367f89 100%);
+  border-radius: 32rpx;
   padding: 34rpx;
   color: #ffffff;
   display: flex;
@@ -29,7 +63,34 @@
   align-items: center;
   box-sizing: border-box;
   margin-bottom: 24rpx;
-  box-shadow: 0 18rpx 42rpx rgba(15, 139, 141, 0.18);
+  box-shadow: 0 20rpx 44rpx rgba(49, 116, 124, 0.2);
+}
+
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.hero::before {
+  width: 300rpx;
+  height: 300rpx;
+  right: -140rpx;
+  top: -190rpx;
+}
+
+.hero::after {
+  width: 230rpx;
+  height: 230rpx;
+  right: 50rpx;
+  bottom: -190rpx;
+}
+
+.hero > view {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-kicker {
@@ -90,17 +151,20 @@
 .summary-item {
   position: relative;
   background: #ffffff;
-  border-radius: 22rpx;
-  padding: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 54, 59, 0.045);
-  border: 1rpx solid #edf2ef;
+  border-radius: 28rpx;
+  padding: 26rpx;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  border: 1rpx solid #eef3f2;
 }
 
 .summary-mark {
-  width: 42rpx;
-  height: 42rpx;
-  border-radius: 14rpx;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 17rpx;
   margin-bottom: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .summary-mark.bind {
@@ -109,6 +173,11 @@
 
 .summary-mark.event {
   background: #fff0ee;
+}
+
+.summary-mark image {
+  width: 32rpx;
+  height: 32rpx;
 }
 
 .num {
@@ -131,15 +200,22 @@
 }
 
 .quick-action {
-  height: 74rpx;
-  border-radius: 22rpx;
+  min-height: 92rpx;
+  border-radius: 25rpx;
   background: #ffffff;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #0f8b8d;
-  font-size: 26rpx;
+  gap: 7rpx;
+  color: #607477;
+  font-size: 23rpx;
   font-weight: 600;
-  box-shadow: 0 8rpx 22rpx rgba(33, 54, 59, 0.04);
-  border: 1rpx solid #edf2ef;
+  box-shadow: 0 14rpx 34rpx rgba(35, 59, 65, 0.09);
+  border: 1rpx solid #eef3f2;
+}
+
+.quick-action image {
+  width: 34rpx;
+  height: 34rpx;
 }

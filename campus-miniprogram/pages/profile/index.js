@@ -71,6 +71,7 @@ Page({
     if (!this.validateProfile()) return
     this.setData({ actionLoading: true })
     const form = this.data.form
+    const editVersion = this.editVersion || 0
     try {
       await userApi.updateMe({
         nickname: form.nickname,
@@ -78,7 +79,10 @@ Page({
         email: form.email
       })
       wx.showToast({ title: '已保存' })
-      this.load(true)
+      if ((this.editVersion || 0) === editVersion) {
+        this.lastLoadedAt = Date.now()
+        this.setData({ formDirty: false })
+      }
     } finally {
       this.setData({ actionLoading: false })
     }
@@ -111,9 +115,12 @@ Page({
         const filePath = res.tempFiles[0].tempFilePath
         this.setData({ actionLoading: true })
         try {
-          await userApi.uploadAvatar(filePath)
+          const data = await userApi.uploadAvatar(filePath)
+          const avatarUrl = data && (data.avatar_url || data.avatarUrl)
+          if (avatarUrl) {
+            this.setData({ 'form.avatar_url': avatarUrl })
+          }
           wx.showToast({ title: '已上传' })
-          this.load(true)
         } finally {
           this.setData({ actionLoading: false })
         }
@@ -142,12 +149,15 @@ Page({
     })
   },
   onNickname(event) {
+    this.editVersion = (this.editVersion || 0) + 1
     this.setData({ 'form.nickname': event.detail.value, formDirty: true })
   },
   onPhone(event) {
+    this.editVersion = (this.editVersion || 0) + 1
     this.setData({ 'form.phone': event.detail.value, formDirty: true })
   },
   onEmail(event) {
+    this.editVersion = (this.editVersion || 0) + 1
     this.setData({ 'form.email': event.detail.value, formDirty: true })
   }
 })

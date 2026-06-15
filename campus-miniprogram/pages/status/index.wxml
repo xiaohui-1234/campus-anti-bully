@@ -2,37 +2,51 @@
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page" style="{{contentStyle}}">
-  <view class="page-title">状态</view>
-  <view class="page-subtitle">查看当前设备在线情况与报警概况</view>
+<view class="page status-page" style="{{contentStyle}}">
+  <view class="page-heading">
+    <view class="page-title">状态</view>
+    <view class="page-subtitle">查看当前设备在线情况与报警概况</view>
+    <image class="heading-shield" src="../../assets/icons/profile/shield-bg.png" mode="aspectFit"></image>
+  </view>
   <loading-view loading="{{loading && !initialized}}" />
   <empty-state wx:if="{{loadError && !loading}}" title="状态加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
   <block wx:else>
     <view class="stats">
       <view class="stat">
-        <view class="stat-icon device"></view>
+        <view class="stat-icon device">
+          <image src="../../assets/icons/shared/device-teal.png" mode="aspectFit"></image>
+        </view>
         <view class="num">{{stats.deviceTotal}}</view>
         <view class="label">设备总数</view>
       </view>
       <view class="stat">
-        <view class="stat-icon online"></view>
+        <view class="stat-icon online">
+          <image src="../../assets/icons/shared/device-green.png" mode="aspectFit"></image>
+        </view>
         <view class="num">{{stats.onlineTotal}}</view>
         <view class="label">在线设备</view>
       </view>
       <view class="stat">
-        <view class="stat-icon today"></view>
+        <view class="stat-icon today">
+          <image src="../../assets/icons/shared/calendar-orange.png" mode="aspectFit"></image>
+        </view>
         <view class="num">{{stats.todayEvents}}</view>
         <view class="label">今日事件</view>
       </view>
       <view class="stat">
-        <view class="stat-icon unread"></view>
+        <view class="stat-icon unread">
+          <image src="../../assets/icons/shared/bell-red.png" mode="aspectFit"></image>
+        </view>
         <view class="num">{{stats.unreadEvents}}</view>
         <view class="label">未读事件</view>
       </view>
     </view>
 
     <view class="panel status-note">
-      <view class="note-title">状态说明</view>
+      <view class="note-title">
+        <image src="../../assets/icons/shared/info-teal.png" mode="aspectFit"></image>
+        <text>状态说明</text>
+      </view>
       <view class="note-text">设备在线状态会根据设备心跳自动更新；网络恢复后，离线期间的报警事件会自动补齐。</view>
     </view>
   </block>

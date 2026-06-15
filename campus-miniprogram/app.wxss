@@ -1,6 +1,6 @@
 page {
   min-height: 100%;
-  background: #f5f7f6;
+  background: #edf2f3;
   color: #263238;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
 }
@@ -38,7 +38,7 @@ page {
 }
 
 .page-title {
-  font-size: 42rpx;
+  font-size: 44rpx;
   font-weight: 800;
   color: #1d2b2f;
   margin: 0 0 8rpx;
@@ -53,8 +53,8 @@ page {
 
 .panel {
   background: #ffffff;
-  border-radius: 22rpx;
-  box-shadow: 0 8rpx 26rpx rgba(33, 54, 59, 0.045);
+  border-radius: 28rpx;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
   padding: 24rpx;
   box-sizing: border-box;
 }
@@ -62,7 +62,7 @@ page {
 .input {
   height: 84rpx;
   border-radius: 18rpx;
-  background: #eef4f2;
+  background: #f0f5f4;
   padding: 0 24rpx;
   font-size: 28rpx;
   box-sizing: border-box;
@@ -71,7 +71,7 @@ page {
 .search-bar {
   height: 84rpx;
   border-radius: 22rpx;
-  background: #eef4f2;
+  background: #f3f6f6;
   padding: 0 24rpx;
   display: flex;
   align-items: center;

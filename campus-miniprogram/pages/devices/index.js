@@ -1,6 +1,8 @@
 ﻿const deviceApi = require('../../services/device-api')
 
-Page({
+const tabSwipe = require('../../utils/tab-swipe')
+
+Page(tabSwipe.withTabSwipe({
   data: {
     loading: false,
     initialized: false,
@@ -209,4 +211,4 @@ Page({
       }
     })
   }
-})
+}))

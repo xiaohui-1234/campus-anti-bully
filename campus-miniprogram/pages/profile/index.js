@@ -1,8 +1,9 @@
 ﻿const authApi = require('../../services/auth-api')
 const userApi = require('../../services/user-api')
 const storage = require('../../utils/storage')
+const tabSwipe = require('../../utils/tab-swipe')
 
-Page({
+Page(tabSwipe.withTabSwipe({
   data: {
     loading: false,
     initialized: false,
@@ -160,4 +161,4 @@ Page({
     this.editVersion = (this.editVersion || 0) + 1
     this.setData({ 'form.email': event.detail.value, formDirty: true })
   }
-})
+}))

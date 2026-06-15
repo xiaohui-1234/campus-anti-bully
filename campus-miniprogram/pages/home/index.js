@@ -3,8 +3,9 @@ const eventApi = require('../../services/event-api')
 const websocket = require('../../services/websocket')
 const audioPlayer = require('../../utils/audio-player')
 const eventLabels = require('../../utils/event-labels')
+const tabSwipe = require('../../utils/tab-swipe')
 
-Page({
+Page(tabSwipe.withTabSwipe({
   data: {
     loading: false,
     initialized: false,
@@ -207,4 +208,4 @@ Page({
       onState: (state) => this.updateAudioState(state)
     })
   }
-})
+}))

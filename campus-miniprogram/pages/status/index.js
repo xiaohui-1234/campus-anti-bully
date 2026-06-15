@@ -1,8 +1,9 @@
 ﻿const deviceApi = require('../../services/device-api')
 const eventApi = require('../../services/event-api')
 const time = require('../../utils/time')
+const tabSwipe = require('../../utils/tab-swipe')
 
-Page({
+Page(tabSwipe.withTabSwipe({
   data: {
     loading: false,
     initialized: false,
@@ -88,4 +89,4 @@ Page({
     clearTimeout(this.reloadTimer)
     this.reloadTimer = setTimeout(() => this.load(false, true), 1200)
   }
-})
+}))

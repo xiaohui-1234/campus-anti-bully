@@ -1,5 +1,6 @@
 page {
   min-height: 100%;
+  overflow-x: hidden;
   background: #edf2f3;
   color: #263238;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -35,6 +36,71 @@ page {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 40rpx 28rpx calc(40rpx + env(safe-area-inset-bottom));
+}
+
+.tab-swipe-page {
+  touch-action: pan-y;
+  overflow-x: hidden;
+}
+
+.tab-swipe-exit-left {
+  animation: tab-swipe-exit-left 0.1s ease-in both;
+}
+
+.tab-swipe-exit-right {
+  animation: tab-swipe-exit-right 0.1s ease-in both;
+}
+
+.tab-swipe-enter-right {
+  animation: tab-swipe-enter-right 0.17s cubic-bezier(0.22, 0.7, 0.25, 1) both;
+}
+
+.tab-swipe-enter-left {
+  animation: tab-swipe-enter-left 0.17s cubic-bezier(0.22, 0.7, 0.25, 1) both;
+}
+
+@keyframes tab-swipe-exit-left {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.68;
+    transform: translate3d(-32rpx, 0, 0);
+  }
+}
+
+@keyframes tab-swipe-exit-right {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0.68;
+    transform: translate3d(32rpx, 0, 0);
+  }
+}
+
+@keyframes tab-swipe-enter-right {
+  from {
+    opacity: 0.68;
+    transform: translate3d(32rpx, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes tab-swipe-enter-left {
+  from {
+    opacity: 0.68;
+    transform: translate3d(-32rpx, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .page-title {

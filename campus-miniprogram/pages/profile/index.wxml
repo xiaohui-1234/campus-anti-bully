@@ -1,8 +1,10 @@
+<wxs module="tabSwipeGesture" src="../../utils/tab-swipe.wxs" />
+
 <view class="custom-nav" style="{{navStyle}}">
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page profile-page" style="{{contentStyle}}">
+<view class="page profile-page tab-swipe-page {{tabSwipeClass}}" style="{{contentStyle}}" data-tab-index="4" data-tab-swipe-disabled="{{actionLoading}}" bindtouchstart="{{tabSwipeGesture.touchStart}}" bindtouchmove="{{tabSwipeGesture.touchMove}}" bindtouchend="{{tabSwipeGesture.touchEnd}}" bindtouchcancel="{{tabSwipeGesture.touchCancel}}">
   <view class="profile-heading">
     <view class="page-title">个人</view>
     <view class="page-subtitle">管理登录资料、联系方式和账号状态</view>

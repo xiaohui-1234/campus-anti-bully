@@ -1,0 +1,118 @@
+var DIRECTION_LOCK_DISTANCE = 12
+var MIN_SWIPE_DISTANCE = 96
+var MAX_SWIPE_DURATION = 900
+var MAX_VERTICAL_RATIO = 0.65
+var LAST_TAB_INDEX = 4
+
+var gesture = {
+  active: false,
+  horizontal: false,
+  x: 0,
+  y: 0,
+  startedAt: 0,
+  tabIndex: -1
+}
+
+function coordinate(touch, axis) {
+  if (!touch) {
+    return 0
+  }
+  var clientKey = axis === 'x' ? 'clientX' : 'clientY'
+  var pageKey = axis === 'x' ? 'pageX' : 'pageY'
+  return typeof touch[clientKey] === 'number' ? touch[clientKey] : touch[pageKey]
+}
+
+function clearGesture() {
+  gesture.active = false
+  gesture.horizontal = false
+  gesture.tabIndex = -1
+}
+
+function lockVerticalScroll(event) {
+  event.preventDefault && event.preventDefault()
+  event.stopPropagation && event.stopPropagation()
+  return false
+}
+
+function touchStart(event, ownerInstance) {
+  if (!event.touches || event.touches.length !== 1) {
+    return
+  }
+  var page = ownerInstance.selectComponent('.tab-swipe-page')
+  var dataset = page && page.getDataset ? page.getDataset() : {}
+  if (dataset.tabSwipeDisabled === true || dataset.tabSwipeDisabled === 'true') {
+    return
+  }
+  var touch = event.touches[0]
+  gesture.active = true
+  gesture.horizontal = false
+  gesture.x = coordinate(touch, 'x')
+  gesture.y = coordinate(touch, 'y')
+  gesture.startedAt = event.timeStamp || 0
+  gesture.tabIndex = Number(dataset.tabIndex)
+}
+
+function touchMove(event) {
+  if (!gesture.active || !event.touches || event.touches.length !== 1) {
+    return
+  }
+  var touch = event.touches[0]
+  var distanceX = Math.abs(coordinate(touch, 'x') - gesture.x)
+  var distanceY = Math.abs(coordinate(touch, 'y') - gesture.y)
+
+  if (!gesture.horizontal && Math.max(distanceX, distanceY) < DIRECTION_LOCK_DISTANCE) {
+    return
+  }
+  if (!gesture.horizontal && distanceY >= distanceX) {
+    clearGesture()
+    return
+  }
+
+  gesture.horizontal = true
+  return lockVerticalScroll(event)
+}
+
+function touchEnd(event, ownerInstance) {
+  if (!gesture.active) {
+    return
+  }
+  var horizontal = gesture.horizontal
+  var touch = event.changedTouches && event.changedTouches[0]
+  if (!touch) {
+    clearGesture()
+    return horizontal ? lockVerticalScroll(event) : undefined
+  }
+
+  var deltaX = coordinate(touch, 'x') - gesture.x
+  var deltaY = coordinate(touch, 'y') - gesture.y
+  var duration = (event.timeStamp || gesture.startedAt) - gesture.startedAt
+  var direction = deltaX < 0 ? 1 : -1
+  var targetIndex = gesture.tabIndex + direction
+  var validSwipe = (
+    gesture.horizontal &&
+    duration <= MAX_SWIPE_DURATION &&
+    Math.abs(deltaX) >= MIN_SWIPE_DISTANCE &&
+    Math.abs(deltaY) <= Math.abs(deltaX) * MAX_VERTICAL_RATIO &&
+    targetIndex >= 0 &&
+    targetIndex <= LAST_TAB_INDEX
+  )
+
+  clearGesture()
+  if (validSwipe) {
+    ownerInstance.callMethod('onTabSwipeCommit', { direction: direction })
+  }
+  return horizontal ? lockVerticalScroll(event) : undefined
+}
+
+function touchCancel(event) {
+  var horizontal = gesture.horizontal
+  clearGesture()
+  return horizontal ? lockVerticalScroll(event) : undefined
+}
+
+module.exports = {
+  touchStart: touchStart,
+  touchMove: touchMove,
+  touchEnd: touchEnd,
+  touchCancel: touchCancel
+}

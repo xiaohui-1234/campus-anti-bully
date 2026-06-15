@@ -1,8 +1,10 @@
+<wxs module="tabSwipeGesture" src="../../utils/tab-swipe.wxs" />
+
 <view class="custom-nav" style="{{navStyle}}">
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page events-page" style="{{contentStyle}}">
+<view class="page events-page tab-swipe-page {{tabSwipeClass}}" style="{{contentStyle}}" data-tab-index="0" data-tab-swipe-disabled="{{detailVisible || actionLoading}}" bindtouchstart="{{tabSwipeGesture.touchStart}}" bindtouchmove="{{tabSwipeGesture.touchMove}}" bindtouchend="{{tabSwipeGesture.touchEnd}}" bindtouchcancel="{{tabSwipeGesture.touchCancel}}">
   <view class="page-heading">
     <view class="page-title">事件</view>
     <view class="page-subtitle">筛选、查看详情、标记已读和播放报警音频</view>

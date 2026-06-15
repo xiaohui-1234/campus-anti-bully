@@ -1,8 +1,10 @@
+<wxs module="tabSwipeGesture" src="../../utils/tab-swipe.wxs" />
+
 <view class="custom-nav" style="{{navStyle}}">
   <view class="custom-nav-title">校园防霸凌</view>
 </view>
 
-<view class="page home-page" style="{{contentStyle}}">
+<view class="page home-page tab-swipe-page {{tabSwipeClass}}" style="{{contentStyle}}" data-tab-index="2" bindtouchstart="{{tabSwipeGesture.touchStart}}" bindtouchmove="{{tabSwipeGesture.touchMove}}" bindtouchend="{{tabSwipeGesture.touchEnd}}" bindtouchcancel="{{tabSwipeGesture.touchCancel}}">
   <view class="home-header">
     <view>
       <view class="page-title">今日守护</view>

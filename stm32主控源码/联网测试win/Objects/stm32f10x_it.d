@@ -31,8 +31,9 @@
 .\objects\stm32f10x_it.o: .\Library/stm32f10x_wwdg.h
 .\objects\stm32f10x_it.o: .\Library/misc.h
 .\objects\stm32f10x_it.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
-.\objects\stm32f10x_it.o: .\Hardware/usart.h
+.\objects\stm32f10x_it.o: .\Hardware/Serial.h
 .\objects\stm32f10x_it.o: D:\danpianji\51\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\stm32f10x_it.o: .\Hardware/usart.h
 .\objects\stm32f10x_it.o: .\Hardware/esp8266.h
 .\objects\stm32f10x_it.o: .\Hardware/Common.h
 .\objects\stm32f10x_it.o: .\Hardware/campus_config.h

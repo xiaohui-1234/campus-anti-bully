@@ -1,7 +1,56 @@
 #include "stm32f10x.h"                  // Device header
 #include "Library/stm32f10x_usart.h"
+#include "Library/misc.h"
 #include <stdio.h>
 #include <stdarg.h>
+
+#define VOICE_CMD_MAX_LEN       20U
+#define VOICE_CMD_QUEUE_SIZE    8U
+
+static volatile char g_VoiceRxLine[VOICE_CMD_MAX_LEN];
+static volatile uint8_t g_VoiceRxIndex = 0;
+static volatile char g_VoiceCmdQueue[VOICE_CMD_QUEUE_SIZE][VOICE_CMD_MAX_LEN];
+static volatile uint8_t g_VoiceCmdHead = 0;
+static volatile uint8_t g_VoiceCmdTail = 0;
+static volatile uint8_t g_VoiceCmdCount = 0;
+
+static void Serial_NVICConfig(void);
+static void Serial_QueueVoiceLine(void);
+void Serial_ClearVoiceCommands(void);
+
+static void Serial_NVICConfig(void)
+{
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+static void Serial_QueueVoiceLine(void)
+{
+	uint8_t i;
+
+	if (g_VoiceRxIndex == 0U) {
+		return;
+	}
+	if (g_VoiceCmdCount >= VOICE_CMD_QUEUE_SIZE) {
+		return;
+	}
+
+	for (i = 0; i < g_VoiceRxIndex; i++) {
+		g_VoiceCmdQueue[g_VoiceCmdTail][i] = g_VoiceRxLine[i];
+	}
+	g_VoiceCmdQueue[g_VoiceCmdTail][g_VoiceRxIndex] = '\0';
+	g_VoiceCmdTail++;
+	if (g_VoiceCmdTail >= VOICE_CMD_QUEUE_SIZE) {
+		g_VoiceCmdTail = 0U;
+	}
+	g_VoiceCmdCount++;
+}
 
 /**
   * 函    数：语音串口初始化
@@ -39,10 +88,73 @@ void Serial_Init(void)
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;		//字长，选择8位
 	USART_Init(USART3, &USART_InitStructure);			//将结构体变量交给USART_Init，配置USART3
 	
+	Serial_ClearVoiceCommands();
+	Serial_NVICConfig();
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
+
 	/*USART使能*/
 	USART_Cmd(USART3, ENABLE);					//使能USART3，串口开始运行
 	
 	
+}
+
+void Serial_VoiceRxIRQHandler(void)
+{
+	uint8_t data;
+
+	if (USART_GetITStatus(USART3, USART_IT_RXNE) != RESET) {
+		data = (uint8_t)USART_ReceiveData(USART3);
+		if ((data == '\r') || (data == '\n')) {
+			Serial_QueueVoiceLine();
+			g_VoiceRxIndex = 0U;
+		} else {
+			if (g_VoiceRxIndex < (VOICE_CMD_MAX_LEN - 1U)) {
+				g_VoiceRxLine[g_VoiceRxIndex++] = (char)data;
+			} else {
+				g_VoiceRxIndex = 0U;
+			}
+		}
+	}
+}
+
+uint8_t Serial_ReadVoiceCommand(char *buffer, uint8_t bufferSize)
+{
+	uint8_t i;
+	uint8_t hasCommand = 0U;
+
+	if ((buffer == 0) || (bufferSize == 0U)) {
+		return 0U;
+	}
+
+	USART_ITConfig(USART3, USART_IT_RXNE, DISABLE);
+	if (g_VoiceCmdCount > 0U) {
+		for (i = 0; i < (uint8_t)(bufferSize - 1U); i++) {
+			buffer[i] = (char)g_VoiceCmdQueue[g_VoiceCmdHead][i];
+			if (buffer[i] == '\0') {
+				break;
+			}
+		}
+		buffer[bufferSize - 1U] = '\0';
+		g_VoiceCmdHead++;
+		if (g_VoiceCmdHead >= VOICE_CMD_QUEUE_SIZE) {
+			g_VoiceCmdHead = 0U;
+		}
+		g_VoiceCmdCount--;
+		hasCommand = 1U;
+	}
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
+
+	return hasCommand;
+}
+
+void Serial_ClearVoiceCommands(void)
+{
+	USART_ITConfig(USART3, USART_IT_RXNE, DISABLE);
+	g_VoiceRxIndex = 0U;
+	g_VoiceCmdHead = 0U;
+	g_VoiceCmdTail = 0U;
+	g_VoiceCmdCount = 0U;
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
 }
 
 /**

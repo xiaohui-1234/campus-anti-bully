@@ -8,6 +8,7 @@
 #include "Hardware/usart.h"
 #include "Hardware/Key.h"
 #include "Hardware/LED.h"
+#include "Hardware/OLED.h"
 #include "Hardware/tf_card.h"
 #include "Alarm/alarm.h"
 #include "Time.h"
@@ -21,7 +22,6 @@
 volatile uint8_t flag;
 uint8_t g_PassthroughMode = 0;
 char uart_buffer[20];
-uint8_t uart_index = 0;
 
 
 #define AUDIO_SAMPLE_RATE_HZ        8000U
@@ -29,6 +29,7 @@ uint8_t uart_index = 0;
 #define AUDIO_DMA_HALF_SIZE         (AUDIO_DMA_BUF_SIZE / 2U)
 #define AUDIO_RECORD_SECONDS        15U
 #define AUDIO_WAV_BYTES_TARGET      (AUDIO_SAMPLE_RATE_HZ * AUDIO_RECORD_SECONDS * 2U)
+#define BIND_CODE_REFRESH_MS        1000U
 
 volatile uint8_t g_AudioHalfReady = 0;
 volatile uint8_t g_AudioFullReady = 0;
@@ -39,8 +40,23 @@ static uint32_t g_WavDataBytes = 0;
 static FIL g_WavFile;
 static char g_WavPath[64];
 static uint8_t g_AudioCaptureRunning = 0;
+static uint8_t g_BindCodeActive = 0;
+static uint8_t g_BindOledReady = 0;
+static uint32_t g_BindCodeExpireMs = 0;
+static uint32_t g_BindCodeNextRefreshMs = 0;
+static uint32_t g_BindCodeSeed = 0;
+static char g_BindCodeText[7];
 
 static uint8_t App_TimeDue(uint32_t nowMs, uint32_t dueMs);
+static void BindCode_InitDisplay(void);
+static uint32_t BindCode_NextRandom(void);
+static void BindCode_Generate(char code[7]);
+static void BindCode_Render(uint32_t nowMs);
+static void BindCode_Stop(void);
+static void BindCode_TryStart(uint32_t nowMs);
+static void BindCode_Service(uint32_t nowMs);
+static void VoiceCommand_Handle(const char *cmd);
+static void VoiceCommand_Process(void);
 static void Audio_Capture_Start(void);
 static void Audio_Capture_Stop(void);
 static void Audio_ToWav_WriteHalf(uint16_t startIndex);
@@ -54,6 +70,115 @@ static void DMA1_Channel1_ADC1_Init(uint16_t *buf, uint16_t size);
 static uint8_t App_TimeDue(uint32_t nowMs, uint32_t dueMs)
 {
     return ((int32_t)(nowMs - dueMs) >= 0) ? 1U : 0U;
+}
+
+static void BindCode_InitDisplay(void)
+{
+    if (OLED_InitAuto() == MYI2C_OK) {
+        g_BindOledReady = 1U;
+        OLED_Clear();
+        OLED_DisplayOff();
+    } else {
+        g_BindOledReady = 0U;
+        printf("OLED init failed\r\n");
+    }
+}
+
+static uint32_t BindCode_NextRandom(void)
+{
+    uint32_t uid0;
+    uint32_t uid1;
+    uint32_t uid2;
+
+    if (g_BindCodeSeed == 0U) {
+        uid0 = *(uint32_t *)0x1FFFF7E8;
+        uid1 = *(uint32_t *)0x1FFFF7EC;
+        uid2 = *(uint32_t *)0x1FFFF7F0;
+        g_BindCodeSeed = uid0 ^ uid1 ^ uid2 ^ App_Millis();
+        if (g_BindCodeSeed == 0U) {
+            g_BindCodeSeed = 0xA5A55A5AUL;
+        }
+    }
+    g_BindCodeSeed = (g_BindCodeSeed * 1664525UL) + 1013904223UL + App_Millis();
+    return g_BindCodeSeed ^ (g_BindCodeSeed >> 16);
+}
+
+static void BindCode_Generate(char code[7])
+{
+    uint32_t value;
+
+    value = 100000UL + (BindCode_NextRandom() % 900000UL);
+    (void)snprintf(code, 7, "%06lu", (unsigned long)value);
+}
+
+static void BindCode_Render(uint32_t nowMs)
+{
+    uint32_t remainMs;
+    uint32_t remainSec;
+
+    if ((g_BindCodeActive == 0U) || (g_BindOledReady == 0U)) {
+        return;
+    }
+    remainMs = App_TimeDue(nowMs, g_BindCodeExpireMs) ? 0U : (g_BindCodeExpireMs - nowMs);
+    remainSec = (remainMs + 999UL) / 1000UL;
+    OLED_DisplayOn();
+    OLED_Clear();
+    OLED_ShowString(0, 0, "Bind Code", 16);
+    OLED_ShowString(28, 22, g_BindCodeText, 16);
+    OLED_ShowString(0, 50, "Valid", 8);
+    OLED_ShowNum(42, 50, remainSec, 2, 8);
+    OLED_ShowString(58, 50, "s", 8);
+}
+
+static void BindCode_Stop(void)
+{
+    g_BindCodeActive = 0U;
+    g_BindCodeText[0] = '\0';
+    if (g_BindOledReady != 0U) {
+        OLED_Clear();
+        OLED_DisplayOff();
+    }
+}
+
+static void BindCode_TryStart(uint32_t nowMs)
+{
+    (void)nowMs;
+    if (g_BindCodeActive != 0U) {
+        return;
+    }
+    if ((g_MqttConnected == 0U) || (g_ESP8266RawBusy != 0U)) {
+        printf("bind code ignored, mqtt not ready\r\n");
+        return;
+    }
+
+    BindCode_Generate(g_BindCodeText);
+    if (!Campus_MQTT_PublishBindCode(g_BindCodeText)) {
+        printf("bind code publish fail\r\n");
+        g_BindCodeText[0] = '\0';
+        return;
+    }
+
+    nowMs = App_Millis();
+    g_BindCodeActive = 1U;
+    g_BindCodeExpireMs = nowMs + CAMPUS_BIND_CODE_VALID_MS;
+    g_BindCodeNextRefreshMs = nowMs + BIND_CODE_REFRESH_MS;
+    BindCode_Render(nowMs);
+    printf("bind code published\r\n");
+}
+
+static void BindCode_Service(uint32_t nowMs)
+{
+    if (g_BindCodeActive == 0U) {
+        return;
+    }
+    if (App_TimeDue(nowMs, g_BindCodeExpireMs)) {
+        BindCode_Stop();
+        return;
+    }
+    if (App_TimeDue(nowMs, g_BindCodeNextRefreshMs)) {
+        BindCode_Render(nowMs);
+        g_BindCodeNextRefreshMs = nowMs + BIND_CODE_REFRESH_MS;
+    }
 }
 
 static FRESULT Wav_WriteHeader(FIL *fp, uint32_t dataBytes)
@@ -389,6 +514,45 @@ void Open_Penetmode(uint8_t key)
     }
 }
 
+static void VoiceCommand_Handle(const char *cmd)
+{
+    printf("Received command: %s\r\n The size of uart_buffer is %d\r\n", cmd, (int)strlen(cmd));
+
+    if (strcmp(cmd, "1") == 0) LED0_ON();
+    else if (strcmp(cmd, "2") == 0) LED0_OFF();
+    else if (strcmp(cmd, "3") == 0) Alarm_Voice();
+    else if (strcmp(cmd, "4") == 0) Alarm_Fire();
+    else if (strcmp(cmd, "5") == 0) Alarm_Kill();
+    else if (strcmp(cmd, "6") == 0) Alarm_Fight();
+    else if (strcmp(cmd, "7") == 0) Alarm_Kidnap();
+    else if (strcmp(cmd, "8") == 0) Alarm_Explosion();
+    else if (strcmp(cmd, "9") == 0) Alarm_Blood();
+    else if (strcmp(cmd, "10") == 0) Alarm_Faint();
+    else if (strcmp(cmd, "11") == 0) Alarm_StopHit();
+    else if (strcmp(cmd, "12") == 0) Alarm_Robbery();
+    else if (strcmp(cmd, "13") == 0) Alarm_HelpMe();
+    else if (strcmp(cmd, "14") == 0) Alarm_CallPeople();
+    else if (strcmp(cmd, "15") == 0) Alarm_GroupFight();
+    else if (strcmp(cmd, "16") == 0) Alarm_DontMove();
+    else if (strcmp(cmd, "17") == 0) General_alarm();
+}
+
+static void VoiceCommand_Process(void)
+{
+    if (App_IsRecording()) {
+        Serial_ClearVoiceCommands();
+        return;
+    }
+
+    while (!App_IsRecording() && Serial_ReadVoiceCommand(uart_buffer, sizeof(uart_buffer))) {
+        VoiceCommand_Handle(uart_buffer);
+    }
+
+    if (App_IsRecording()) {
+        Serial_ClearVoiceCommands();
+    }
+}
+
 void Get_STM32_UID(char *uid_str)
 {
     uint32_t uid[3];
@@ -414,6 +578,7 @@ int main(void)
     LED_Init();
     Key_Init();
     USART_Config();						//设置串口中断 打印wifi收发信息 占用PA9 PA10 115200 将接收到的信息通过串口发送stm32上
+    BindCode_InitDisplay();
 
     // 2. 读取芯片唯一ID，作为设备身份相关信息输出到调试串口。
     Get_STM32_UID(uid_str);
@@ -435,14 +600,22 @@ int main(void)
 
     while (1) {
         uint8_t key;
+        uint8_t bindPressed;
         uint8_t controlBlocked;
+        uint32_t nowMs;
 
         // 6. 轮询按键；录音期间屏蔽按键控制，避免告警流程被重复触发。
+        nowMs = App_Millis();
+        BindCode_Service(nowMs);
         key = Key_GetNum();
+        bindPressed = Key_GetBindPressed();
         controlBlocked = App_IsRecording();
         if (!controlBlocked) {
             Open_Penetmode(key);	//开启串口1和2的穿透模式
             Alarm_ButtomDown(key);
+            if ((bindPressed != 0U) && (g_PassthroughMode == 0U)) {
+                BindCode_TryStart(App_Millis());
+            }
         }
 
 		
@@ -451,48 +624,7 @@ int main(void)
         if (g_PassthroughMode == 0U) {		//在没有进入穿透模式下
 			
 			// 8. 处理语音模块串口输入，按命令编号触发不同告警类型。
-            if (USART_GetFlagStatus(USART3, USART_FLAG_RXNE) == SET) {
-                uint8_t data;
-                data = (uint8_t)USART_ReceiveData(USART3);
-				
-                if (App_IsRecording()) {
-                    uart_index = 0;
-                } 
-				else if (data == '\r' || data == '\n') {
-					
-                    if (uart_index > 0U) {
-                        uart_buffer[uart_index] = '\0';
-                        printf("Received command: %s\r\n The size of uart_buffer is %d\r\n", uart_buffer, strlen(uart_buffer));
-						
-                        if (strcmp(uart_buffer, "1") == 0) LED0_ON();
-                        else if (strcmp(uart_buffer, "2") == 0) LED0_OFF();
-                        else if (strcmp(uart_buffer, "3") == 0) Alarm_Voice();
-                        else if (strcmp(uart_buffer, "4") == 0) Alarm_Fire();
-                        else if (strcmp(uart_buffer, "5") == 0) Alarm_Kill();
-                        else if (strcmp(uart_buffer, "6") == 0) Alarm_Fight();
-                        else if (strcmp(uart_buffer, "7") == 0) Alarm_Kidnap();
-                        else if (strcmp(uart_buffer, "8") == 0) Alarm_Explosion();
-                        else if (strcmp(uart_buffer, "9") == 0) Alarm_Blood();
-                        else if (strcmp(uart_buffer, "10") == 0) Alarm_Faint();
-                        else if (strcmp(uart_buffer, "11") == 0) Alarm_StopHit();
-                        else if (strcmp(uart_buffer, "12") == 0) Alarm_Robbery();
-                        else if (strcmp(uart_buffer, "13") == 0) Alarm_HelpMe();
-                        else if (strcmp(uart_buffer, "14") == 0) Alarm_CallPeople();
-                        else if (strcmp(uart_buffer, "15") == 0) Alarm_GroupFight();
-                        else if (strcmp(uart_buffer, "16") == 0) Alarm_DontMove();
-                        else if (strcmp(uart_buffer, "17") == 0) General_alarm();
-
-                        uart_index = 0;
-                    }
-					
-                } else {
-                    if (uart_index < (sizeof(uart_buffer) - 1U)) {
-                        uart_buffer[uart_index++] = (char)data;
-                    } else {
-                        uart_index = 0;
-                    }
-                }
-            }
+            VoiceCommand_Process();
 			
 			
 			

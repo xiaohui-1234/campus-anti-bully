@@ -20,6 +20,7 @@ import com.campus.security.SecurityContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -40,6 +40,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DeviceService {
+
+    private static final DefaultRedisScript<Long> CONSUME_BIND_CODE_SCRIPT = new DefaultRedisScript<>("""
+            if redis.call('GET', KEYS[1]) == ARGV[1] then
+                return redis.call('DEL', KEYS[1])
+            end
+            return 0
+            """, Long.class);
 
     private final DeviceMapper deviceMapper;
     private final UserDeviceBindMapper bindMapper;
@@ -76,13 +83,12 @@ public class DeviceService {
     public DeviceVO bind(BindDeviceRequest request) {
         LoginUser loginUser = SecurityContextUtil.currentUser();
         Device device = findByDeviceId(request.getDeviceId());
-        String bindCode = stringRedisTemplate.opsForValue().get(RedisKeys.deviceBindCode(request.getDeviceId()));
-        if (!StringUtils.hasText(bindCode) || !Objects.equals(bindCode, request.getBindCode())) {
-            throw new BizException(403, "绑定码错误或已过期");
-        }
         UserDeviceBind existing = findBind(loginUser.getUserTableId(), device.getId());
         if (existing != null) {
             return toVO(device, existing);
+        }
+        if (!consumeBindCode(device.getDeviceId(), request.getBindCode())) {
+            throw new BizException(403, "绑定码错误或已过期");
         }
         UserDeviceBind bind = new UserDeviceBind();
         bind.setUserTableId(loginUser.getUserTableId());
@@ -136,6 +142,14 @@ public class DeviceService {
                 TimeUnit.SECONDS);
         log.info("Device bind code refreshed, device_id={}, ttl_seconds={}",
                 device.getDeviceId(), properties.getCache().getBindCodeTtlSeconds());
+    }
+
+    boolean consumeBindCode(String deviceId, String bindCode) {
+        Long result = stringRedisTemplate.execute(
+                CONSUME_BIND_CODE_SCRIPT,
+                List.of(RedisKeys.deviceBindCode(deviceId)),
+                bindCode);
+        return Long.valueOf(1L).equals(result);
     }
 
     public UserDeviceBind ensureUserBoundDevice(Long userTableId, Long deviceTableId) {

@@ -1,6 +1,7 @@
 #ifndef __SERIAL_H
 #define __SERIAL_H
 
+#include "stm32f10x.h"
 #include <stdio.h>
 
 void Serial_Init(void);
@@ -10,5 +11,8 @@ void Serial_SendString(char *String);
 void Serial_SendNumber(uint32_t Number, uint8_t Length);
 void Serial_Printf(char *format, ...);
 void Serial_SendUTF8String(char *str);
+void Serial_VoiceRxIRQHandler(void);
+uint8_t Serial_ReadVoiceCommand(char *buffer, uint8_t bufferSize);
+void Serial_ClearVoiceCommands(void);
 
 #endif

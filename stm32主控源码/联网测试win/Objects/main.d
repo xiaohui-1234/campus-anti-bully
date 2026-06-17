@@ -41,6 +41,8 @@
 .\objects\main.o: .\Hardware/usart.h
 .\objects\main.o: .\Hardware/Key.h
 .\objects\main.o: .\Hardware/LED.h
+.\objects\main.o: .\Hardware/OLED.h
+.\objects\main.o: .\Hardware/MyI2C.h
 .\objects\main.o: .\Hardware/tf_card.h
 .\objects\main.o: .\ff.h
 .\objects\main.o: .\ffconf.h

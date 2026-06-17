@@ -24,6 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include <string.h> 
+#include "Hardware/Serial.h"
 #include "Hardware/usart.h"
 #include "Hardware/esp8266.h"
 #include "Time.h"
@@ -177,6 +178,11 @@ void DEBUG_USART_IRQHandler(void)//串口1中断服务函数
     	USART_SendData(USART1,ucTemp);
     }
 	}	     
+}
+
+void USART3_IRQHandler(void)
+{
+	Serial_VoiceRxIRQHandler();
 }
 
 

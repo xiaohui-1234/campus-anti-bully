@@ -319,6 +319,30 @@ bool Campus_MQTT_PublishOnline(void)
 	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_STATUS_ONLINE, g_PayloadBuf);
 }
 
+bool Campus_MQTT_PublishBindCode(const char *bindCode)
+{
+	char msgId[48];
+	int written;
+
+	if ((bindCode == 0) || (strlen(bindCode) != 6U)) {
+		return false;
+	}
+
+	Campus_BuildMsgId(msgId, sizeof(msgId));
+	written = snprintf(g_PayloadBuf, sizeof(g_PayloadBuf),
+		"{\"mqtt_msg_id\":\"%s\",\"product_type\":\"%s\",\"device_id\":\"%s\",\"bind_code\":\"%s\"}",
+		msgId,
+		CAMPUS_PRODUCT_TYPE,
+		CAMPUS_DEVICE_ID,
+		bindCode);
+	if ((written <= 0) || ((uint32_t)written >= sizeof(g_PayloadBuf))) {
+		printf("bind payload too long\r\n");
+		return false;
+	}
+
+	return Campus_MQTT_PublishJson(CAMPUS_TOPIC_BIND, g_PayloadBuf);
+}
+
 // 告警发生时先保存事件类型和文案，等待录音文件生成后再上报文件信息。
 bool Campus_MQTT_SetPendingAlarm(const char *eventType, const char *alarmInfo)
 {

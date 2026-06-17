@@ -30,6 +30,8 @@
 ".\objects\bsp_gpio.o"
 ".\objects\led.o"
 ".\objects\key.o"
+".\objects\myi2c.o"
+".\objects\oled.o"
 ".\objects\esp8266.o"
 ".\objects\campus_mqtt.o"
 ".\objects\common.o"

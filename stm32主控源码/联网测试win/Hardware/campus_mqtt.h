@@ -10,6 +10,9 @@ void Campus_MQTT_OnConnected(void);
 // 主动发布设备在线心跳/上线状态。
 bool Campus_MQTT_PublishOnline(void);
 
+// 发布一次性绑定验证码。
+bool Campus_MQTT_PublishBindCode(const char *bindCode);
+
 // 记录待处理告警上下文；录音结束后会带着该上下文发起告警上报。
 bool Campus_MQTT_SetPendingAlarm(const char *eventType, const char *alarmInfo);
 

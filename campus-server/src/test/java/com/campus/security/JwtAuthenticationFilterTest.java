@@ -3,6 +3,8 @@ package com.campus.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -14,7 +16,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+
+@SpringBootTest
 class JwtAuthenticationFilterTest {
+
+    @Autowired
+    JwtTokenProvider jwtTokenProvider;
 
     @AfterEach
     void clearSecurityContext() {
@@ -52,5 +59,12 @@ class JwtAuthenticationFilterTest {
         });
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+
+    @Test
+    void jwtTest() throws Exception {
+        String token = jwtTokenProvider.createAccessToken(new LoginUser(1L, "user-1", "USER"));
+        System.out.println(token);
     }
 }

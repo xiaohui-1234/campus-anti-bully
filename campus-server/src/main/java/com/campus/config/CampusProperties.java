@@ -18,13 +18,55 @@ public class CampusProperties {
     @Data
     public static class Security {
         private Jwt jwt = new Jwt();
+        private Password password = new Password();
+        private EmailCode emailCode = new EmailCode();
+        private SecurityEmailChange securityEmailChange = new SecurityEmailChange();
+        private LoginLimit loginLimit = new LoginLimit();
+        private Crypto crypto = new Crypto();
     }
 
     @Data
     public static class Jwt {
-        private long accessTokenExpireSeconds = 7200;
+        private long accessTokenExpireSeconds = 1800;
         private long refreshTokenExpireSeconds = 604800;
         private String secret = "please-change-this-secret-at-least-32-bytes";
+    }
+
+    @Data
+    public static class Password {
+        private int minLength = 8;
+        private int maxLength = 64;
+        private int bcryptStrength = 10;
+    }
+
+    @Data
+    public static class EmailCode {
+        private int codeLength = 6;
+        private long ttlSeconds = 300;
+        private long resendIntervalSeconds = 60;
+        private int maxAttempts = 5;
+        private int maxIpSends = 20;
+        private boolean mock = true;
+        private String from = "";
+    }
+
+    @Data
+    public static class SecurityEmailChange {
+        private long grantTtlSeconds = 600;
+        private int ticketBytes = 32;
+    }
+
+    @Data
+    public static class LoginLimit {
+        private boolean enabled = true;
+        private int maxFailCount = 5;
+        private long lockSeconds = 900;
+    }
+
+    @Data
+    public static class Crypto {
+        private String hmacSecret = "dev-hmac-secret-change-me";
+        private String aesKey = "dev-aes-key-change-me";
     }
 
     @Data

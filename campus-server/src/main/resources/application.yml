@@ -21,7 +21,7 @@ spring:
       max-request-size: 3MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://39.105.153.170/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
     password: zhouyuhui
   data:
@@ -30,6 +30,26 @@ spring:
       port: 6379
       password: zhouyuhui
       database: 0
+  mail:
+    host: ${CAMPUS_MAIL_HOST:smtp.qq.com}
+    port: ${CAMPUS_MAIL_PORT:465}
+    username: ${CAMPUS_MAIL_USERNAME:3832793423@qq.com}
+    password: ${CAMPUS_MAIL_PASSWORD:rafvkhakgrvccfid}
+    protocol: ${CAMPUS_MAIL_PROTOCOL:smtps}
+    default-encoding: UTF-8
+    test-connection: false
+    properties:
+      mail:
+        smtp:
+          auth: ${CAMPUS_MAIL_SMTP_AUTH:true}
+          ssl:
+            enable: ${CAMPUS_MAIL_SMTP_SSL_ENABLE:true}
+          starttls:
+            enable: ${CAMPUS_MAIL_SMTP_STARTTLS_ENABLE:false}
+            required: ${CAMPUS_MAIL_SMTP_STARTTLS_REQUIRED:false}
+          connectiontimeout: ${CAMPUS_MAIL_CONNECTION_TIMEOUT:5000}
+          timeout: ${CAMPUS_MAIL_TIMEOUT:5000}
+          writetimeout: ${CAMPUS_MAIL_WRITE_TIMEOUT:5000}
 
 mybatis-plus:
   configuration:
@@ -47,9 +67,31 @@ springdoc:
 campus:
   security:
     jwt:
-      access-token-expire-seconds: 7200
+      access-token-expire-seconds: 1800
       refresh-token-expire-seconds: 604800
       secret: "please-change-this-secret-at-least-32-bytes"
+    password:
+      min-length: 8
+      max-length: 64
+      bcrypt-strength: 10
+    email-code:
+      code-length: 6
+      ttl-seconds: 300
+      resend-interval-seconds: 60
+      max-attempts: 5
+      max-ip-sends: 20
+      mock: false
+      from: ${CAMPUS_MAIL_FROM:3832793423@qq.com}
+    security-email-change:
+      grant-ttl-seconds: 600
+      ticket-bytes: 32
+    login-limit:
+      enabled: true
+      max-fail-count: 5
+      lock-seconds: 900
+    crypto:
+      hmac-secret: ${CAMPUS_HMAC_SECRET:dev-hmac-secret-change-me}
+      aes-key: ${CAMPUS_AES_KEY:dev-aes-key-change-me}
   wx:
     miniapp:
       app-id: "wx28559fd52a9bef53"
@@ -57,8 +99,8 @@ campus:
   mqtt:
     enabled: true
     broker-url: "tcp://47.116.107.124:1883"
-    client-id: "campus-server1"
-    username: "root"
+    client-id: "campus-server2"
+    username: "root2"
     password: "@Zyh056610"
     qos: 1
     completion-timeout-ms: 5000

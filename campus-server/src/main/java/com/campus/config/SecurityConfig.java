@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -42,13 +44,26 @@ public class SecurityConfig {
                                 writeError(response, 403, "无权限")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/auth/wx/login", "/api/v1/auth/openid/admin-login", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/wx/login",
+                                "/api/v1/auth/openid/admin-login",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/email-code/send",
+                                "/api/v1/auth/password/register",
+                                "/api/v1/auth/password/login",
+                                "/api/v1/auth/password/reset"
+                        ).permitAll()
                         .requestMatchers("/ws/v1/client").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/backend/v1/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(com.campus.config.CampusProperties properties) {
+        return new BCryptPasswordEncoder(properties.getSecurity().getPassword().getBcryptStrength());
     }
 
     @Bean

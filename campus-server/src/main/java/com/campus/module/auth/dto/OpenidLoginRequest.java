@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 public class OpenidLoginRequest {
 
-    @NotBlank
+    @NotBlank(message = "登录参数错误")
     private String openid;
 }

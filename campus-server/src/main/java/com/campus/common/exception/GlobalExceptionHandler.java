@@ -29,11 +29,11 @@ public class GlobalExceptionHandler {
         String message;
         if (ex instanceof MethodArgumentNotValidException methodEx) {
             message = methodEx.getBindingResult().getFieldErrors().stream()
-                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                    .map(error -> error.getDefaultMessage() == null ? "参数错误" : error.getDefaultMessage())
                     .collect(Collectors.joining("; "));
         } else {
             message = ((BindException) ex).getBindingResult().getFieldErrors().stream()
-                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                    .map(error -> error.getDefaultMessage() == null ? "参数错误" : error.getDefaultMessage())
                     .collect(Collectors.joining("; "));
         }
         return ApiResult.fail(-1, message);

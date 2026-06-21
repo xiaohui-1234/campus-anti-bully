@@ -56,6 +56,20 @@ Page(tabSwipe.withTabSwipe({
   login() {
     this.endSession('切换账号', '切换账号后需要重新使用微信登录。')
   },
+  openSecurity() {
+    if (this.data.actionLoading) return
+    wx.hideTabBar({
+      animation: false,
+      complete: () => {
+        wx.navigateTo({
+          url: '/pages/security/index',
+          fail: () => {
+            wx.showTabBar({ animation: false, fail() {} })
+          }
+        })
+      }
+    })
+  },
   roleText(role) {
     const labels = {
       USER: '普通用户',

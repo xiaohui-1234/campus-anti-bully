@@ -11,7 +11,7 @@
         <div class="guard-list">
           <div class="guard-item">
             <el-icon><UserFilled /></el-icon>
-            <span>仅允许 ADMIN 用户通过 openid 登录</span>
+            <span>仅允许 ADMIN 用户进入管理后台</span>
           </div>
           <div class="guard-item">
             <el-icon><Key /></el-icon>
@@ -28,21 +28,33 @@
         <div class="form-head">
           <div>
             <div class="form-title">管理员登录</div>
-            <div class="form-subtitle">输入已登记的管理员 openid</div>
+            <div class="form-subtitle">使用安全邮箱或用户 ID 登录</div>
           </div>
           <div class="status-pill">ADMIN</div>
         </div>
 
-        <label class="field-label">OpenID</label>
+        <label class="field-label">邮箱 / 用户 ID</label>
         <el-input
-          v-model="openid"
+          v-model="form.loginId"
           size="large"
-          placeholder="请输入管理员 openid"
+          placeholder="请输入安全邮箱或用户 ID"
           clearable
-          :prefix-icon="Key"
+          :prefix-icon="UserFilled"
           @keyup.enter="submit"
         />
-        <div class="field-help">openid 只用于本次登录校验，服务端按哈希匹配管理员账号。</div>
+
+        <label class="field-label password-label">登录密码</label>
+        <el-input
+          v-model="form.password"
+          size="large"
+          placeholder="请输入登录密码"
+          type="password"
+          show-password
+          clearable
+          :prefix-icon="Lock"
+          @keyup.enter="submit"
+        />
+        <div class="field-help">仅已设置安全邮箱和密码的 ADMIN 账号可以进入后台。</div>
 
         <el-button type="primary" class="login-button" size="large" :loading="loading" @click="submit">
           <span>登录并进入后台</span>
@@ -57,21 +69,29 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Key, Lock, UserFilled } from '@element-plus/icons-vue'
-import { loginByOpenid } from '../services/api'
+import { loginByPassword } from '../services/api'
 
-const openid = ref('')
+const form = ref({
+  loginId: '',
+  password: ''
+})
 const loading = ref(false)
 const router = useRouter()
 
 async function submit() {
-  const value = openid.value.trim()
-  if (!value) {
-    ElMessage.warning('请输入 openid')
+  const loginId = form.value.loginId.trim()
+  const password = form.value.password
+  if (!loginId) {
+    ElMessage.warning('请输入安全邮箱或用户 ID')
+    return
+  }
+  if (!password) {
+    ElMessage.warning('请输入登录密码')
     return
   }
   loading.value = true
   try {
-    await loginByOpenid(value)
+    await loginByPassword(loginId, password)
     ElMessage.success('登录成功')
     router.push('/config')
   } catch (error) {
@@ -216,6 +236,10 @@ p {
   color: #2c3a43;
   font-size: 14px;
   font-weight: 700;
+}
+
+.password-label {
+  margin-top: 18px;
 }
 
 .field-help {

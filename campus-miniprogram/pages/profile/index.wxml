@@ -73,6 +73,16 @@
         <text class="arrow">›</text>
       </view>
     </view>
+    <view class="action-item" bindtap="openSecurity">
+      <view class="action-main">
+        <image class="action-icon" src="../../assets/icons/profile/mail-orange.png" mode="aspectFit"></image>
+        <text>密保管理</text>
+      </view>
+      <view class="action-side">
+        <text>邮箱与登录密码</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
     <view class="action-item" bindtap="login">
       <view class="action-main">
         <image class="action-icon" src="../../assets/icons/profile/switch-purple.png" mode="aspectFit"></image>

@@ -25,6 +25,38 @@ public final class RedisKeys {
         return "jwt:blacklist:" + tokenId;
     }
 
+    public static String emailCode(String scene, String emailHash) {
+        return "auth:email_code:" + scene + ":" + emailHash;
+    }
+
+    public static String emailCodeResendLimit(String scene, String emailHash) {
+        return "auth:email_code_limit:" + scene + ":" + emailHash;
+    }
+
+    public static String emailCodeAttempt(String scene, String emailHash) {
+        return "auth:email_code_attempt:" + scene + ":" + emailHash;
+    }
+
+    public static String emailCodeIpLimit(String scene, String ipHash) {
+        return "auth:email_code_ip_limit:" + scene + ":" + ipHash;
+    }
+
+    public static String loginFailSubject(String subjectHash) {
+        return "auth:login_fail:subject:" + subjectHash;
+    }
+
+    public static String loginFailIp(String ipHash) {
+        return "auth:login_fail:ip:" + ipHash;
+    }
+
+    public static String securityEmailChangeGrant(String userId, String ticketHash) {
+        return "auth:security_email_change_grant:" + userId + ":" + ticketHash;
+    }
+
+    public static String securityEmailChangeCurrent(String userId) {
+        return "auth:security_email_change_current:" + userId;
+    }
+
     public static String eventUnpulledUser(String userId) {
         return "event:unpulled:user:" + userId;
     }

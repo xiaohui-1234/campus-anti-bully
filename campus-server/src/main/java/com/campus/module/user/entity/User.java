@@ -15,10 +15,19 @@ public class User {
     private Long id;
     private String userId;
     private String openidHash;
+    private String securityEmailHash;
+    private String securityEmailCipher;
+    private Boolean securityEmailVerified;
+    private LocalDateTime securityEmailVerifiedTime;
+    private LocalDateTime securityEmailUpdateTime;
+    private String passwordHash;
+    private LocalDateTime passwordSetTime;
+    private Integer tokenVersion;
     private String nickname;
     private String email;
     private String phone;
     private String avatarUrl;
     private String role;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

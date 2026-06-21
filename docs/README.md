@@ -5,6 +5,7 @@
 ## 文档清单
 
 - `HTTP接口文档.md`：小程序端和后台端 HTTP 接口。
+- `account-security-extension.md`：安全邮箱、密码、邮箱验证码、跨端账号和迁移说明。
 - `MQTT协议文档.md`：设备和后端之间的 topic、payload、去重和处理流程。
 - `WebSocket设计.md`：客户端单连接、订阅消息、推送消息和权限校验。
 - `数据库设计.md`：MySQL 表结构、索引和敏感字段约束。
@@ -20,5 +21,7 @@
 - WebSocket 只使用 `/ws/v1/client` 单连接，客户端通过消息订阅多个设备。
 - MQTT topic 使用 `device/{product_type}/{device_id}/{action}`，不要随意改名。
 - 不明文保存或返回 `openid`、`device_secret`、`wifi_password`、JWT、MinIO `secret_key`。
+- `email` 保留为通知邮箱，不作为登录凭证；跨端登录使用安全邮箱和密码。
+- 安全邮箱明文只允许加密保存和服务端内部发信使用，对外只返回脱敏值。
 - 设备和事件相关 HTTP/WebSocket 操作必须校验当前用户是否绑定目标设备。
 - Controller 保持薄层，复杂业务逻辑放在 Service、MQTT Handler、Storage Service 或 WebSocket Handler。

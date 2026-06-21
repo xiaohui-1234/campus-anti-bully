@@ -6,6 +6,7 @@
     "pages/devices/index",
     "pages/status/index",
     "pages/profile/index",
+    "pages/security/index",
     "pages/agreement/index"
   ],
   "subPackages": [],

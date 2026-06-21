@@ -1,0 +1,218 @@
+<view class="custom-nav" style="{{navStyle}}">
+  <view class="nav-back" bindtap="goBack">‹</view>
+  <view class="custom-nav-title">密保管理</view>
+</view>
+
+<view class="page security-page" style="{{contentStyle}}">
+  <empty-state wx:if="{{loadError && !loading && !initialized}}" title="账号安全信息加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
+
+  <block wx:else>
+  <view wx:if="{{initialized}}" class="security-content">
+    <view class="hero-card">
+      <view class="hero-top">
+        <view>
+          <view class="hero-title">账号保护</view>
+          <view class="hero-subtitle">{{needsActivation ? '完成密保后可使用多端登录' : '安全邮箱和密码用于登录与找回'}}</view>
+        </view>
+      </view>
+      <view class="hero-id">用户ID：{{security.user_id || '未获取'}}</view>
+      <view class="summary-list">
+        <view class="summary-row">
+          <view class="summary-icon email">
+            <image src="../../assets/icons/security/mail-gray.png" mode="aspectFit"></image>
+          </view>
+          <view class="summary-main">
+            <view class="summary-label">安全邮箱</view>
+            <view class="summary-value">{{security.security_email_masked || '未设置'}}</view>
+          </view>
+          <view class="summary-tag {{security.security_email_verified ? '' : 'warn'}}">
+            <image wx:if="{{security.security_email_verified}}" class="mini-icon" src="../../assets/icons/security/check-circle-teal.png" mode="aspectFit"></image>
+            <image wx:else class="mini-icon" src="../../assets/icons/security/alert-circle-orange.png" mode="aspectFit"></image>
+            <text>{{security.security_email_verified ? '已验证' : '待设置'}}</text>
+          </view>
+        </view>
+        <view class="summary-row">
+          <view class="summary-icon password">
+            <image src="../../assets/icons/security/lock-gray.png" mode="aspectFit"></image>
+          </view>
+          <view class="summary-main">
+            <view class="summary-label">登录密码</view>
+            <view class="summary-value">{{security.password_enabled ? '已启用' : '未启用'}}</view>
+          </view>
+          <view class="summary-tag {{security.password_enabled ? '' : 'warn'}}">
+            <image wx:if="{{security.password_enabled}}" class="mini-icon" src="../../assets/icons/security/user-circle-teal.png" mode="aspectFit"></image>
+            <image wx:else class="mini-icon" src="../../assets/icons/security/alert-circle-orange.png" mode="aspectFit"></image>
+            <text>{{security.password_enabled ? '可登录' : '待设置'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{hasPartialSecurity && !needsActivation}}" class="notice-card">
+      <view class="notice-title">账号状态需要确认</view>
+      <view class="notice-desc">当前安全邮箱和密码状态不一致，请联系管理员确认后再调整。</view>
+    </view>
+
+    <view wx:if="{{needsActivation}}" class="panel setup-card">
+      <view class="block-head">
+        <view>
+          <view class="block-title">设置安全邮箱与密码</view>
+          <view class="block-subtitle">先验证邮箱，再设置登录密码</view>
+        </view>
+      </view>
+      <view class="field-list">
+        <view class="field">
+          <view class="field-label">安全邮箱</view>
+          <input class="field-input" placeholder="用于验证和找回密码" placeholder-class="field-placeholder" maxlength="128" value="{{activateForm.security_email}}" bindinput="onActivateEmail" />
+        </view>
+        <view class="field field-code">
+          <view class="field-label">验证码</view>
+          <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="16" value="{{activateForm.verify_code}}" bindinput="onActivateCode" />
+          <view class="send-link {{countdowns.activate > 0 ? 'disabled' : ''}}" bindtap="sendActivateCode">{{countdowns.activate > 0 ? countdowns.activate + 's' : '发送'}}</view>
+        </view>
+        <view class="field">
+          <view class="field-label">登录密码</view>
+          <input class="field-input" password placeholder="8-64位，含字母和数字" placeholder-class="field-placeholder" maxlength="64" value="{{activateForm.password}}" bindinput="onActivatePassword" />
+        </view>
+        <view class="field">
+          <view class="field-label">确认密码</view>
+          <input class="field-input" password placeholder="再次输入密码" placeholder-class="field-placeholder" maxlength="64" value="{{activateForm.confirm_password}}" bindinput="onActivateConfirm" />
+        </view>
+      </view>
+      <view class="primary-button {{actionLoading ? 'disabled' : ''}}" bindtap="activateAccount">{{actionLoading ? '处理中...' : '完成设置'}}</view>
+    </view>
+
+    <block wx:else>
+      <view class="segment">
+        <view class="segment-item {{activeSection === 'email' ? 'active' : ''}}" data-section="email" bindtap="switchSection">
+          <image wx:if="{{activeSection === 'email'}}" class="segment-icon" src="../../assets/icons/security/mail-teal.png" mode="aspectFit"></image>
+          <image wx:else class="segment-icon" src="../../assets/icons/security/mail-gray.png" mode="aspectFit"></image>
+          <text>安全邮箱</text>
+        </view>
+        <view class="segment-item {{activeSection === 'password' ? 'active' : ''}}" data-section="password" bindtap="switchSection">
+          <image wx:if="{{activeSection === 'password'}}" class="segment-icon" src="../../assets/icons/security/lock-teal.png" mode="aspectFit"></image>
+          <image wx:else class="segment-icon" src="../../assets/icons/security/lock-gray.png" mode="aspectFit"></image>
+          <text>登录密码</text>
+        </view>
+      </view>
+
+      <view wx:if="{{activeSection === 'email'}}" class="panel manage-card">
+        <view class="block-head">
+          <view>
+            <view class="block-title">修改安全邮箱</view>
+            <view class="block-subtitle">当前邮箱：{{security.security_email_masked || '未设置'}}</view>
+          </view>
+        </view>
+
+        <view class="step-line">
+          <view class="step-dot {{emailForm.old_verified ? 'done' : 'active'}}">1</view>
+          <view class="step-text">验证当前安全邮箱</view>
+        </view>
+        <view class="field-list">
+          <view class="field field-code">
+            <view class="field-label">旧邮箱码</view>
+            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="16" value="{{emailForm.old_verify_code}}" bindinput="onOldEmailCode" disabled="{{emailForm.old_verified}}" />
+            <view class="send-link {{countdowns.old_email > 0 || emailForm.old_verified ? 'disabled' : ''}}" bindtap="sendOldEmailCode">{{emailForm.old_verified ? '已验' : (countdowns.old_email > 0 ? countdowns.old_email + 's' : '发送')}}</view>
+          </view>
+        </view>
+        <view class="secondary-button {{emailForm.old_verified ? 'done' : ''}}" bindtap="verifyOldEmail">{{emailForm.old_verified ? '旧邮箱验证通过' : '验证旧邮箱'}}</view>
+
+        <view class="step-line second">
+          <view class="step-dot {{emailForm.old_verified ? 'active' : ''}}">2</view>
+          <view class="step-text">绑定新的安全邮箱</view>
+        </view>
+        <view class="field-list {{emailForm.old_verified ? '' : 'locked'}}">
+          <view class="field">
+            <view class="field-label">新安全邮箱</view>
+            <input class="field-input" placeholder="输入新的安全邮箱" placeholder-class="field-placeholder" maxlength="128" value="{{emailForm.new_security_email}}" bindinput="onNewEmail" disabled="{{!emailForm.old_verified}}" />
+          </view>
+          <view class="field field-code">
+            <view class="field-label">新邮箱码</view>
+            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="16" value="{{emailForm.new_verify_code}}" bindinput="onNewEmailCode" disabled="{{!emailForm.old_verified}}" />
+            <view class="send-link {{countdowns.new_email > 0 || !emailForm.old_verified ? 'disabled' : ''}}" bindtap="sendNewEmailCode">{{countdowns.new_email > 0 ? countdowns.new_email + 's' : '发送'}}</view>
+          </view>
+        </view>
+        <view class="primary-button {{!emailForm.old_verified || actionLoading ? 'disabled' : ''}}" bindtap="confirmEmailChange">{{actionLoading ? '处理中...' : '确认修改'}}</view>
+      </view>
+
+      <view wx:if="{{activeSection === 'password'}}" class="panel manage-card">
+        <view class="block-head">
+          <view>
+            <view class="block-title">修改登录密码</view>
+            <view class="block-subtitle">修改成功后需要重新登录</view>
+          </view>
+        </view>
+
+        <block wx:if="{{!passwordResetVisible}}">
+          <view class="field-list {{security.password_enabled ? '' : 'locked'}}">
+            <view class="field">
+              <view class="field-label">原密码</view>
+              <input class="field-input" password placeholder="输入当前密码" placeholder-class="field-placeholder" maxlength="64" value="{{passwordForm.old_password}}" bindinput="onOldPassword" disabled="{{!security.password_enabled}}" />
+            </view>
+            <view class="field">
+              <view class="field-label">新密码</view>
+              <input class="field-input" password placeholder="8-64位，含字母和数字" placeholder-class="field-placeholder" maxlength="64" value="{{passwordForm.new_password}}" bindinput="onNewPassword" disabled="{{!security.password_enabled}}" />
+            </view>
+            <view class="field">
+              <view class="field-label">确认密码</view>
+              <input class="field-input" password placeholder="再次输入新密码" placeholder-class="field-placeholder" maxlength="64" value="{{passwordForm.confirm_password}}" bindinput="onConfirmPassword" disabled="{{!security.password_enabled}}" />
+            </view>
+          </view>
+          <view class="primary-button {{!security.password_enabled || actionLoading ? 'disabled' : ''}}" bindtap="changePassword">{{actionLoading ? '处理中...' : '修改密码'}}</view>
+          <view class="reset-entry {{!security.security_email_verified || !security.password_enabled ? 'disabled' : ''}}" bindtap="showPasswordReset">
+            <image src="../../assets/icons/security/mail-teal.png" mode="aspectFit"></image>
+            <text>忘记原密码？使用安全邮箱重置</text>
+          </view>
+        </block>
+
+        <block wx:else>
+          <view class="reset-hint">
+            <image src="../../assets/icons/security/alert-circle-orange.png" mode="aspectFit"></image>
+            <text>请输入完整安全邮箱并验证，当前邮箱：{{security.security_email_masked || '未设置'}}</text>
+          </view>
+          <view class="field-list {{security.security_email_verified && security.password_enabled ? '' : 'locked'}}">
+            <view class="field">
+              <view class="field-label">安全邮箱</view>
+              <input class="field-input" placeholder="输入完整安全邮箱" placeholder-class="field-placeholder" maxlength="128" value="{{passwordResetForm.security_email}}" bindinput="onResetEmail" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
+            </view>
+            <view class="field field-code">
+              <view class="field-label">验证码</view>
+              <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="16" value="{{passwordResetForm.verify_code}}" bindinput="onResetCode" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
+              <view class="send-link {{countdowns.reset_password > 0 || !security.security_email_verified || !security.password_enabled ? 'disabled' : ''}}" bindtap="sendResetPasswordCode">{{countdowns.reset_password > 0 ? countdowns.reset_password + 's' : '发送'}}</view>
+            </view>
+            <view class="field">
+              <view class="field-label">新密码</view>
+              <input class="field-input" password placeholder="8-64位，含字母和数字" placeholder-class="field-placeholder" maxlength="64" value="{{passwordResetForm.new_password}}" bindinput="onResetPassword" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
+            </view>
+            <view class="field">
+              <view class="field-label">确认密码</view>
+              <input class="field-input" password placeholder="再次输入新密码" placeholder-class="field-placeholder" maxlength="64" value="{{passwordResetForm.confirm_password}}" bindinput="onResetConfirm" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
+            </view>
+          </view>
+          <view class="primary-button {{!security.security_email_verified || !security.password_enabled || actionLoading ? 'disabled' : ''}}" bindtap="resetPasswordByEmail">{{actionLoading ? '处理中...' : '重置密码'}}</view>
+          <view class="secondary-button compact" bindtap="hidePasswordReset">返回原密码修改</view>
+        </block>
+      </view>
+    </block>
+  </view>
+
+  <view wx:else class="security-skeleton">
+    <view class="skeleton-card">
+      <view class="skeleton-line title"></view>
+      <view class="skeleton-line short"></view>
+      <view class="skeleton-list">
+        <view class="skeleton-row"></view>
+        <view class="skeleton-row"></view>
+      </view>
+    </view>
+    <view class="skeleton-tabs"></view>
+    <view class="skeleton-card small">
+      <view class="skeleton-line medium"></view>
+      <view class="skeleton-line short"></view>
+      <view class="skeleton-field"></view>
+      <view class="skeleton-field"></view>
+      <view class="skeleton-button"></view>
+    </view>
+  </view>
+  </block>
+</view>

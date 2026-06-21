@@ -41,10 +41,10 @@
         </el-menu-item>
       </el-menu>
       <div class="aside-footer">
-        <div class="admin-avatar">A</div>
+        <div class="admin-avatar">{{ adminInitial }}</div>
         <div>
-          <strong>系统管理员</strong>
-          <span>ADMIN</span>
+          <strong>{{ adminName }}</strong>
+          <span>{{ adminUserId }}</span>
         </div>
       </div>
     </el-aside>
@@ -82,10 +82,24 @@ const pageTitles = {
   '/system': '系统信息'
 }
 const currentTitle = computed(() => pageTitles[route.path] || '管理后台')
+const adminInfo = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('admin_user_info') || '{}')
+  } catch (error) {
+    return {}
+  }
+})
+const adminName = computed(() => adminInfo.value.nickname || '系统管理员')
+const adminUserId = computed(() => adminInfo.value.user_id || adminInfo.value.userId || 'ADMIN')
+const adminInitial = computed(() => {
+  const text = adminName.value || adminUserId.value || 'A'
+  return String(text).slice(0, 1).toUpperCase()
+})
 
 function logout() {
   localStorage.removeItem('admin_access_token')
   localStorage.removeItem('admin_refresh_token')
+  localStorage.removeItem('admin_user_info')
   router.push('/login')
 }
 </script>

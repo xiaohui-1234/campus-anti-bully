@@ -12,6 +12,9 @@ public class UserInfoVO {
     private String avatarUrl;
     private String phone;
     private String email;
+    private String securityEmailMasked;
+    private Boolean securityEmailVerified;
+    private Boolean passwordEnabled;
     private String role;
     private LocalDateTime createdAt;
     private Boolean isNewUser;

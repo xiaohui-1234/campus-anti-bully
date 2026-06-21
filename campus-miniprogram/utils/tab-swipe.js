@@ -24,6 +24,7 @@ function getRoute(page) {
 }
 
 function animateEntry(page) {
+  wx.showTabBar({ animation: false, fail() {} })
   const route = getRoute(page)
   if (!pendingEntry || pendingEntry.route !== route) {
     pendingEntry = null

@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "密保管理",
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
+  "usingComponents": {
+    "loading-view": "../../components/loading-view/index",
+    "empty-state": "../../components/empty-state/index"
+  }
+}

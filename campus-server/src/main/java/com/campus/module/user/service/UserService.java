@@ -3,6 +3,7 @@ package com.campus.module.user.service;
 import com.campus.common.exception.BizException;
 import com.campus.common.util.FileUtil;
 import com.campus.config.CampusProperties;
+import com.campus.module.auth.service.AccountCryptoService;
 import com.campus.module.storage.service.StorageService;
 import com.campus.module.user.dto.UpdateUserRequest;
 import com.campus.module.user.entity.User;
@@ -24,6 +25,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final StorageService storageService;
     private final CampusProperties properties;
+    private final AccountCryptoService accountCryptoService;
 
     public UserInfoVO me() {
         return toVO(currentUser());
@@ -75,6 +77,9 @@ public class UserService {
         vo.setAvatarUrl(user.getAvatarUrl());
         vo.setPhone(user.getPhone());
         vo.setEmail(user.getEmail());
+        vo.setSecurityEmailMasked(accountCryptoService.maskEncryptedEmail(user.getSecurityEmailCipher()));
+        vo.setSecurityEmailVerified(Boolean.TRUE.equals(user.getSecurityEmailVerified()));
+        vo.setPasswordEnabled(org.springframework.util.StringUtils.hasText(user.getPasswordHash()));
         vo.setRole(user.getRole());
         vo.setCreatedAt(user.getCreateTime());
         vo.setIsNewUser(false);

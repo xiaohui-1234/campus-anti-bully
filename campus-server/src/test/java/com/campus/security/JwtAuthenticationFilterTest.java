@@ -65,6 +65,6 @@ class JwtAuthenticationFilterTest {
     @Test
     void jwtTest() throws Exception {
         String token = jwtTokenProvider.createAccessToken(new LoginUser(1L, "user-1", "USER"));
-        System.out.println(token);
+        assertNotNull(token);
     }
 }

@@ -40,7 +40,7 @@ public class JwtTokenProvider {
         if (!TYPE_ACCESS.equals(claims.get("type", String.class))) {
             throw BizException.unauthorized("token 类型错误");
         }
-        return new LoginUser(claims.get("uid", Long.class), claims.getSubject(), claims.get("role", String.class));
+        return toLoginUser(claims);
     }
 
     public LoginUser parseRefreshToken(String token) {
@@ -48,7 +48,7 @@ public class JwtTokenProvider {
         if (!TYPE_REFRESH.equals(claims.get("type", String.class))) {
             throw BizException.unauthorized("refresh_token 类型错误");
         }
-        return new LoginUser(claims.get("uid", Long.class), claims.getSubject(), claims.get("role", String.class));
+        return toLoginUser(claims);
     }
 
     public String tokenId(String token) {
@@ -67,10 +67,21 @@ public class JwtTokenProvider {
                 .claim("uid", loginUser.getUserTableId())
                 .claim("role", loginUser.getRole())
                 .claim("type", type)
+                .claim("ver", loginUser.getTokenVersion())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(ttlSeconds)))
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    private LoginUser toLoginUser(Claims claims) {
+        Integer tokenVersion = claims.get("ver", Integer.class);
+        return new LoginUser(
+                claims.get("uid", Long.class),
+                claims.getSubject(),
+                claims.get("role", String.class),
+                tokenVersion
+        );
     }
 
     private Claims parseClaims(String token) {

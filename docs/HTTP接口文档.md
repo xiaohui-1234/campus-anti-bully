@@ -1,6 +1,12 @@
 # HTTP 接口文档
 
-后端默认端口 `8080`。小程序端接口前缀为 `/api/v1`，后台端接口前缀为 `/backend/v1`。返回 JSON 统一使用 `snake_case`。
+后端默认端口 `8080`。普通用户端接口前缀为 `/api/v1`，配置后台接口前缀为 `/backend/v1`。返回 JSON 统一使用 `snake_case`。
+
+当前账号体系同时支持：
+
+- 微信小程序通过 `wx.login` 换取 openid 后登录。
+- Android/Web/小程序跨端账号通过安全邮箱或 `user_id` 加密码登录。
+- 已有微信小程序账号可在登录后设置安全邮箱和密码，之后可迁移到 Android/Web 登录。
 
 ## 通用返回
 
@@ -41,13 +47,16 @@ POST /api/v1/auth/wx/login
   "access_token": "...",
   "refresh_token": "...",
   "token_type": "Bearer",
-  "expires_in": 7200,
+  "expires_in": 1800,
   "user_info": {
     "user_id": "usr_xxx",
     "nickname": "张三",
     "avatar_url": "",
     "phone": "",
     "email": "",
+    "security_email_masked": "u***@example.com",
+    "security_email_verified": true,
+    "password_enabled": true,
     "role": "USER",
     "created_at": "2026-06-08 12:00:00",
     "is_new_user": true
@@ -55,7 +64,9 @@ POST /api/v1/auth/wx/login
 }
 ```
 
-### 开发管理员 openid 登录
+后端只保存 `openid_hash`，不保存或返回明文 openid。
+
+### 兼容开发管理员 openid 登录
 
 ```text
 POST /api/v1/auth/openid/admin-login
@@ -69,7 +80,182 @@ POST /api/v1/auth/openid/admin-login
 }
 ```
 
-仅用于开发或受控后台入口。生产环境不要在文档、日志或响应中暴露真实 openid。
+该接口仅作为兼容开发入口保留，当前配置后台默认不再使用 openid 登录。生产环境不要在文档、日志或响应中暴露真实 openid。
+
+### 发送邮箱验证码
+
+```text
+POST /api/v1/auth/email-code/send
+```
+
+请求：
+
+```json
+{
+  "scene": "PASSWORD_REGISTER",
+  "security_email": "user@example.com",
+  "change_ticket": ""
+}
+```
+
+`scene` 支持：
+
+| 场景 | 是否登录 | 是否需要 `security_email` | 用途 |
+| --- | --- | --- | --- |
+| `PASSWORD_REGISTER` | 否 | 是 | 邮箱密码注册 |
+| `ACTIVATE_ACCOUNT` | 是 | 是 | 小程序旧账号首次设置安全邮箱和密码 |
+| `RESET_PASSWORD` | 否 | 是 | 通过安全邮箱重置密码 |
+| `CHANGE_SECURITY_EMAIL_OLD` | 是 | 否 | 修改安全邮箱前验证当前安全邮箱 |
+| `CHANGE_SECURITY_EMAIL_NEW` | 是 | 是 | 修改安全邮箱时验证新邮箱 |
+
+说明：
+
+- `CHANGE_SECURITY_EMAIL_OLD` 不接收邮箱，后端会读取当前登录用户已绑定的安全邮箱。
+- `CHANGE_SECURITY_EMAIL_NEW` 必须携带旧邮箱验证后返回的 `change_ticket`。
+- 验证码发送有邮箱冷却、IP 发送次数限制和验证码错误次数限制。
+- `RESET_PASSWORD` 为防止枚举账号，即使邮箱不存在或账号状态不允许重置，也不暴露具体原因。
+
+### 邮箱密码注册
+
+```text
+POST /api/v1/auth/password/register
+```
+
+请求：
+
+```json
+{
+  "security_email": "user@example.com",
+  "verify_code": "123456",
+  "password": "StrongPassword123"
+}
+```
+
+响应同微信登录，注册后直接签发 token。密码长度和复杂度由 `campus.security.password.*` 配置控制，当前要求 8 到 64 位且同时包含字母和数字。
+
+### 邮箱或用户 ID 加密码登录
+
+```text
+POST /api/v1/auth/password/login
+```
+
+请求：
+
+```json
+{
+  "login_id": "user@example.com",
+  "password": "StrongPassword123"
+}
+```
+
+`login_id` 可以是安全邮箱，也可以是 `user_id`。只有同时满足以下条件才允许密码登录：
+
+- `security_email_verified = true`
+- `password_hash` 不为空
+
+配置后台也使用该接口登录，但前端只保存 `user_info.role = ADMIN` 的登录态；普通用户即使能完成密码登录，也不能进入 `/backend/v1/**` 管理接口。
+
+### 小程序账号激活跨端登录
+
+```text
+POST /api/v1/auth/account/activate
+Authorization: Bearer <access_token>
+```
+
+用于已经通过小程序微信登录、但还没有安全邮箱和密码的账号。
+
+请求：
+
+```json
+{
+  "security_email": "user@example.com",
+  "verify_code": "123456",
+  "password": "StrongPassword123"
+}
+```
+
+设置成功后，该账号可继续用微信登录，也可在 Android/Web/小程序通过安全邮箱或 `user_id` 加密码登录。
+
+### 验证旧安全邮箱
+
+```text
+POST /api/v1/auth/security-email/change/verify-old
+Authorization: Bearer <access_token>
+```
+
+请求：
+
+```json
+{
+  "old_verify_code": "123456"
+}
+```
+
+响应 `data`：
+
+```json
+{
+  "change_ticket": "...",
+  "expires_in": 600
+}
+```
+
+`change_ticket` 短时间保存在 Redis 中。每个用户同一时间只保留一个最新有效 ticket，重新验证旧邮箱会覆盖旧 ticket。
+
+### 确认修改安全邮箱
+
+```text
+POST /api/v1/auth/security-email/change/confirm
+Authorization: Bearer <access_token>
+```
+
+请求：
+
+```json
+{
+  "change_ticket": "...",
+  "new_security_email": "new@example.com",
+  "new_verify_code": "654321"
+}
+```
+
+成功修改安全邮箱不会让当前登录态下线，也不会递增 `token_version`。
+
+### 修改密码
+
+```text
+POST /api/v1/auth/password/change
+Authorization: Bearer <access_token>
+```
+
+请求：
+
+```json
+{
+  "old_password": "OldPassword123",
+  "new_password": "NewPassword123"
+}
+```
+
+成功后 `token_version` 递增，旧 refresh token 失效；已签发的 access token 按过期时间自然失效。
+
+### 通过安全邮箱重置密码
+
+```text
+POST /api/v1/auth/password/reset
+```
+
+请求：
+
+```json
+{
+  "security_email": "user@example.com",
+  "verify_code": "123456",
+  "new_password": "NewPassword123"
+}
+```
+
+成功后同样递增 `token_version`，旧 refresh token 失效。
 
 ### 刷新 token
 
@@ -91,7 +277,7 @@ POST /api/v1/auth/refresh
 {
   "access_token": "...",
   "token_type": "Bearer",
-  "expires_in": 7200
+  "expires_in": 1800
 }
 ```
 
@@ -99,9 +285,10 @@ POST /api/v1/auth/refresh
 
 ```text
 POST /api/v1/auth/wx/logout
+Authorization: Bearer <access_token>
 ```
 
-后端将 access token 加入 Redis 黑名单。
+当前路径保留 `wx/logout` 名称，但逻辑是通用退出登录：后端将 access token 的 `jti` 加入 Redis 黑名单。
 
 ## Users
 
@@ -111,7 +298,25 @@ POST /api/v1/auth/wx/logout
 GET /api/v1/users/me
 ```
 
-响应字段同 `user_info`。
+响应字段同 `user_info`：
+
+```json
+{
+  "user_id": "usr_xxx",
+  "nickname": "张三",
+  "avatar_url": "",
+  "phone": "",
+  "email": "notice@example.com",
+  "security_email_masked": "u***@example.com",
+  "security_email_verified": true,
+  "password_enabled": true,
+  "role": "USER",
+  "created_at": "2026-06-08 12:00:00",
+  "is_new_user": false
+}
+```
+
+`email` 是通知邮箱，不用于登录；`security_email_masked` 是脱敏后的安全邮箱。
 
 ### 更新当前用户
 
@@ -240,7 +445,7 @@ DELETE /api/v1/devices/{deviceId}/binding
 GET /api/v1/events/unpulled
 ```
 
-用于小程序离线后补拉 Redis 中缓存的待推送事件。
+用于小程序或后续 Android/Web 客户端离线后补拉 Redis 中缓存的待推送事件。
 
 ### 搜索事件
 
@@ -329,6 +534,21 @@ POST /api/v1/events/{eventId}/refresh-url
 ## Admin
 
 后台接口要求 `ADMIN` 角色。
+
+配置后台登录方式：
+
+```text
+POST /api/v1/auth/password/login
+```
+
+开发种子管理员：
+
+```text
+账号：admin@example.com 或 usr_admin
+密码：Admin123456
+```
+
+生产环境必须替换或删除种子管理员。
 
 ### 获取配置
 

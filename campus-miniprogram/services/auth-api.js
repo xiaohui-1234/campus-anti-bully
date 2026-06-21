@@ -30,7 +30,37 @@ async function logout() {
   }
 }
 
+function sendEmailCode(data) {
+  return request({ url: '/auth/email-code/send', method: 'POST', data })
+}
+
+function activateAccount(data) {
+  return request({ url: '/auth/account/activate', method: 'POST', data })
+}
+
+function verifyOldSecurityEmail(data) {
+  return request({ url: '/auth/security-email/change/verify-old', method: 'POST', data })
+}
+
+function confirmSecurityEmailChange(data) {
+  return request({ url: '/auth/security-email/change/confirm', method: 'POST', data })
+}
+
+function changePassword(data, options = {}) {
+  return request(Object.assign({ url: '/auth/password/change', method: 'POST', data }, options))
+}
+
+function resetPassword(data, options = {}) {
+  return request(Object.assign({ url: '/auth/password/reset', method: 'POST', data }, options))
+}
+
 module.exports = {
   loginByWxCode,
-  logout
+  logout,
+  sendEmailCode,
+  activateAccount,
+  verifyOldSecurityEmail,
+  confirmSecurityEmailChange,
+  changePassword,
+  resetPassword
 }

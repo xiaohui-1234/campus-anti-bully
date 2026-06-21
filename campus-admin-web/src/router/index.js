@@ -25,8 +25,20 @@ const router = createRouter({
   routes
 })
 
+function hasAdminSession() {
+  if (!localStorage.getItem('admin_access_token')) {
+    return false
+  }
+  try {
+    const userInfo = JSON.parse(localStorage.getItem('admin_user_info') || '{}')
+    return userInfo.role === 'ADMIN'
+  } catch (error) {
+    return false
+  }
+}
+
 router.beforeEach((to) => {
-  if (to.path !== '/login' && !localStorage.getItem('admin_access_token')) {
+  if (to.path !== '/login' && !hasAdminSession()) {
     return '/login'
   }
   return true

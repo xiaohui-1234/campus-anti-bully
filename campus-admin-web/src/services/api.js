@@ -45,11 +45,19 @@ api.interceptors.response.use((response) => {
   return Promise.reject(error)
 })
 
-export async function loginByOpenid(openid) {
-  const response = await authApi.post('/auth/openid/admin-login', { openid })
+export async function loginByPassword(loginId, password) {
+  const response = await authApi.post('/auth/password/login', {
+    login_id: loginId,
+    password
+  })
   const body = response.data
   if (body.code !== 0) {
     throw new Error(body.message || '登录失败')
+  }
+  const userInfo = body.data.user_info || body.data.userInfo || {}
+  if (userInfo.role !== 'ADMIN') {
+    clearAdminTokens()
+    throw new Error('当前账号没有后台管理权限')
   }
   setAdminTokens(body.data)
   return body.data
@@ -58,11 +66,13 @@ export async function loginByOpenid(openid) {
 function setAdminTokens(data) {
   localStorage.setItem('admin_access_token', data.access_token || data.accessToken)
   localStorage.setItem('admin_refresh_token', data.refresh_token || data.refreshToken)
+  localStorage.setItem('admin_user_info', JSON.stringify(data.user_info || data.userInfo || {}))
 }
 
 function clearAdminTokens() {
   localStorage.removeItem('admin_access_token')
   localStorage.removeItem('admin_refresh_token')
+  localStorage.removeItem('admin_user_info')
 }
 
 function refreshAccessToken() {

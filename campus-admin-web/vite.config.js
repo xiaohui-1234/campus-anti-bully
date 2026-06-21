@@ -7,11 +7,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/backend': {
-        target: 'https://campus.1314-520.xyz',
+        target: 'http://localhost:8080',
         changeOrigin: true
       },
       '/api': {
-        target: 'https://campus.1314-520.xyz',
+        target: 'http://localhost:8080',
         changeOrigin: true
       }
     }

@@ -1,4 +1,4 @@
-<view class="custom-nav" style="{{navStyle}}">
+﻿<view class="custom-nav" style="{{navStyle}}">
   <view class="nav-back" bindtap="goBack">‹</view>
   <view class="custom-nav-title">密保管理</view>
 </view>
@@ -67,7 +67,7 @@
         </view>
         <view class="field field-code">
           <view class="field-label">验证码</view>
-          <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="16" value="{{activateForm.verify_code}}" bindinput="onActivateCode" />
+          <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="6" value="{{activateForm.verify_code}}" bindinput="onActivateCode" />
           <view class="send-link {{countdowns.activate > 0 ? 'disabled' : ''}}" bindtap="sendActivateCode">{{countdowns.activate > 0 ? countdowns.activate + 's' : '发送'}}</view>
         </view>
         <view class="field">
@@ -111,7 +111,7 @@
         <view class="field-list">
           <view class="field field-code">
             <view class="field-label">旧邮箱码</view>
-            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="16" value="{{emailForm.old_verify_code}}" bindinput="onOldEmailCode" disabled="{{emailForm.old_verified}}" />
+            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="6" value="{{emailForm.old_verify_code}}" bindinput="onOldEmailCode" disabled="{{emailForm.old_verified}}" />
             <view class="send-link {{countdowns.old_email > 0 || emailForm.old_verified ? 'disabled' : ''}}" bindtap="sendOldEmailCode">{{emailForm.old_verified ? '已验' : (countdowns.old_email > 0 ? countdowns.old_email + 's' : '发送')}}</view>
           </view>
         </view>
@@ -128,7 +128,7 @@
           </view>
           <view class="field field-code">
             <view class="field-label">新邮箱码</view>
-            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="16" value="{{emailForm.new_verify_code}}" bindinput="onNewEmailCode" disabled="{{!emailForm.old_verified}}" />
+            <input class="field-input code-input" type="number" placeholder="输入验证码" placeholder-class="field-placeholder" maxlength="6" value="{{emailForm.new_verify_code}}" bindinput="onNewEmailCode" disabled="{{!emailForm.old_verified}}" />
             <view class="send-link {{countdowns.new_email > 0 || !emailForm.old_verified ? 'disabled' : ''}}" bindtap="sendNewEmailCode">{{countdowns.new_email > 0 ? countdowns.new_email + 's' : '发送'}}</view>
           </view>
         </view>
@@ -177,7 +177,7 @@
             </view>
             <view class="field field-code">
               <view class="field-label">验证码</view>
-              <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="16" value="{{passwordResetForm.verify_code}}" bindinput="onResetCode" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
+              <input class="field-input code-input" type="number" placeholder="邮箱验证码" placeholder-class="field-placeholder" maxlength="6" value="{{passwordResetForm.verify_code}}" bindinput="onResetCode" disabled="{{!security.security_email_verified || !security.password_enabled}}" />
               <view class="send-link {{countdowns.reset_password > 0 || !security.security_email_verified || !security.password_enabled ? 'disabled' : ''}}" bindtap="sendResetPasswordCode">{{countdowns.reset_password > 0 ? countdowns.reset_password + 's' : '发送'}}</view>
             </view>
             <view class="field">
@@ -216,3 +216,4 @@
   </view>
   </block>
 </view>
+

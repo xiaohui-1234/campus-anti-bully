@@ -14,7 +14,7 @@
     <view class="header-badge"><view class="badge-dot"></view>在线 {{onlineTotal}}</view>
   </view>
 
-  <view class="hero">
+  <view class="hero" bindtap="openUnreadEvents">
     <view>
       <view class="hero-kicker">待关注事件</view>
       <view class="hero-title">{{pendingTotal}}</view>
@@ -52,6 +52,10 @@
       <image src="../../assets/icons/shared/bell-red.png" mode="aspectFit"></image>
       <text>查看事件</text>
     </navigator>
+    <view class="quick-action" bindtap="openUnreadEvents">
+      <image src="../../assets/icons/shared/calendar-orange.png" mode="aspectFit"></image>
+      <text>待处理</text>
+    </view>
     <navigator url="/pages/profile/index" open-type="switchTab" class="quick-action">
       <image src="../../assets/icons/shared/profile-purple.png" mode="aspectFit"></image>
       <text>个人资料</text>

@@ -24,7 +24,8 @@ App({
     boundDevicesFetchedAt: 0,
     boundDevicesLoading: null,
     unreadBadgeFetchedAt: 0,
-    unreadBadgeLoading: null
+    unreadBadgeLoading: null,
+    eventListPreset: null
   },
   onLaunch() {
     wx.setStorageSync('app_launched_at', Date.now())
@@ -239,6 +240,14 @@ App({
     this.globalData.pendingEvent = null
     return event
   },
+  setEventListPreset(preset) {
+    this.globalData.eventListPreset = preset || null
+  },
+  consumeEventListPreset() {
+    const preset = this.globalData.eventListPreset
+    this.globalData.eventListPreset = null
+    return preset
+  },
   resetSession() {
     storage.clearTokens()
     clearTimeout(this.globalData.eventRealtimeStartTimer)
@@ -257,6 +266,7 @@ App({
     this.globalData.boundDevicesLoading = null
     this.globalData.unreadBadgeFetchedAt = 0
     this.globalData.unreadBadgeLoading = null
+    this.globalData.eventListPreset = null
     this.setUnreadEventBadge(0)
     this.setHomePushBadge(0)
     this.setRealtimeStatus('OFFLINE')

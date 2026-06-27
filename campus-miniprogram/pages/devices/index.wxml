@@ -15,6 +15,7 @@
     <view class="search-bar">
       <image class="toolbar-search-icon" src="../../assets/icons/event/search-gray.png" mode="aspectFit"></image>
       <input class="search-input" placeholder="搜索设备名称、地点或编号" value="{{keyword}}" bindinput="onKeyword" bindfocus="onSearchFocus" bindblur="onSearchBlur" confirm-type="search" bindconfirm="reload" />
+      <view wx:if="{{keyword}}" class="search-clear" catchtap="clearKeyword">×</view>
     </view>
     <view class="button search-button" bindtap="reload">
       <image src="../../assets/icons/event/search-white.png" mode="aspectFit"></image>
@@ -38,6 +39,7 @@
   <block wx:if="{{devices.length}}">
     <device-card wx:for="{{devices}}" wx:key="device_id" device="{{item}}" bind:open="openDetail" />
     <view wx:if="{{hasMore}}" class="button secondary load-more" bindtap="loadMore">加载更多设备</view>
+    <view wx:else class="list-end">已显示全部 {{devices.length}} 台设备</view>
   </block>
   <empty-state
     wx:elif="{{!loading || initialized}}"
@@ -62,6 +64,10 @@
       <view class="detail-handle"></view>
       <view class="detail-title">{{currentDevice.device_name || currentDevice.deviceName || currentDevice.device_id}}</view>
       <view class="detail-desc">这些信息只影响当前用户看到的设备备注</view>
+      <view class="detail-status-row">
+        <view class="detail-status {{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? 'online' : ''}}">{{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? '在线' : '离线'}}</view>
+        <view class="detail-time">最近在线：{{currentDevice.last_online_time || currentDevice.lastOnlineTime || '暂无记录'}}</view>
+      </view>
       <input class="input form-input" placeholder="设备名称" maxlength="50" value="{{editForm.device_name}}" bindinput="onEditName" />
       <input class="input form-input" placeholder="地点" maxlength="100" value="{{editForm.location}}" bindinput="onEditLocation" />
       <input class="input form-input" placeholder="备注" maxlength="200" value="{{editForm.note}}" bindinput="onEditNote" />

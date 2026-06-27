@@ -12,12 +12,28 @@ function updateMe(data) {
 
 function uploadAvatar(filePath, retried = false) {
   return new Promise((resolve, reject) => {
+    const token = storage.getAccessToken()
+    if (!token) {
+      if (!retried && storage.getRefreshToken()) {
+        request.refreshAccessToken()
+          .then(() => uploadAvatar(filePath, true))
+          .then(resolve)
+          .catch((err) => {
+            redirectToLogin()
+            reject(err)
+          })
+        return
+      }
+      redirectToLogin()
+      reject({ code: 401, message: '登录状态已失效，请重新登录' })
+      return
+    }
     wx.uploadFile({
       url: `${env.baseUrl}/users/me/avatar`,
       filePath,
       name: 'file',
       header: {
-        Authorization: `Bearer ${storage.getAccessToken()}`
+        Authorization: `Bearer ${token}`
       },
       success: async (res) => {
         let body
@@ -41,6 +57,11 @@ function uploadAvatar(filePath, retried = false) {
           }
           return
         }
+        if (res.statusCode === 401 || body.code === 401) {
+          redirectToLogin()
+          reject(body)
+          return
+        }
         if (body.code === 0) {
           resolve(body.data)
         } else {
@@ -54,6 +75,16 @@ function uploadAvatar(filePath, retried = false) {
       }
     })
   })
+}
+
+function redirectToLogin() {
+  const app = typeof getApp === 'function' ? getApp() : null
+  if (app && typeof app.redirectToLogin === 'function') {
+    app.redirectToLogin()
+  } else {
+    storage.clearTokens()
+    wx.reLaunch({ url: '/pages/login/index' })
+  }
 }
 
 module.exports = {

@@ -25,6 +25,78 @@
   opacity: 0.58;
 }
 
+.realtime-card {
+  min-height: 112rpx;
+  margin-bottom: 22rpx;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  border: 1rpx solid #eef3f2;
+  box-shadow: 0 16rpx 42rpx rgba(35, 59, 65, 0.105);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  box-sizing: border-box;
+}
+
+.realtime-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.realtime-pulse {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #9aa6a8;
+  box-shadow: 0 0 0 9rpx rgba(154, 166, 168, 0.12);
+  flex: 0 0 auto;
+}
+
+.realtime-card.online .realtime-pulse {
+  background: #39b777;
+  box-shadow: 0 0 0 9rpx rgba(57, 183, 119, 0.12);
+}
+
+.realtime-card.connecting .realtime-pulse {
+  background: #f0a335;
+  box-shadow: 0 0 0 9rpx rgba(240, 163, 53, 0.14);
+}
+
+.realtime-card.offline .realtime-pulse {
+  background: #d84f45;
+  box-shadow: 0 0 0 9rpx rgba(216, 79, 69, 0.12);
+}
+
+.realtime-title {
+  color: #1d2b2f;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.realtime-desc {
+  margin-top: 7rpx;
+  color: #7c8b8d;
+  font-size: 24rpx;
+}
+
+.realtime-refresh {
+  width: 104rpx;
+  height: 58rpx;
+  border-radius: 17rpx;
+  background: #e8f4f3;
+  color: #0f8b8d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -106,4 +178,32 @@
   color: #6f7f82;
   font-size: 26rpx;
   line-height: 1.65;
+}
+
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.quick-link {
+  height: 88rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  color: #526466;
+  border: 1rpx solid #eef3f2;
+  box-shadow: 0 14rpx 34rpx rgba(35, 59, 65, 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.quick-link image {
+  width: 34rpx;
+  height: 34rpx;
+  flex: 0 0 auto;
 }

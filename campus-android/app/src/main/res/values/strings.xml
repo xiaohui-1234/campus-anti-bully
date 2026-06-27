@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">校园防护</string>
+    <string name="notification_channel_realtime">实时风险提醒</string>
+    <string name="notification_channel_sync">后台同步</string>
+</resources>

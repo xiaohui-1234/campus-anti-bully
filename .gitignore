@@ -3,3 +3,7 @@ dist/
 target/
 .idea/
 .vscode/
+.gradle/
+build/
+local.properties
+*.iml

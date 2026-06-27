@@ -43,7 +43,9 @@ Page(tabSwipe.withTabSwipe({
     endTime: '',
     actionLoading: false,
     filtersActive: false,
+    activeFilterCount: 0,
     loadError: false,
+    realtimeHintCount: 0,
     audioState: {
       event_id: '',
       playing: false,
@@ -61,6 +63,7 @@ Page(tabSwipe.withTabSwipe({
     this.pageVisible = true
     getApp().setNavLayout(this)
     getApp().deferEnsureEventRealtime()
+    if (this.applyListPreset()) return
     this.refreshCurrentPage()
   },
   async onPullDownRefresh() {
@@ -73,12 +76,14 @@ Page(tabSwipe.withTabSwipe({
   onHide() {
     this.pageVisible = false
     clearTimeout(this.realtimeReloadTimer)
+    clearTimeout(this.keywordTimer)
     this.pendingAudioEventId = ''
     audioPlayer.stop()
   },
   onUnload() {
     clearTimeout(this.realtimeReloadTimer)
     clearTimeout(this.deviceReloadTimer)
+    clearTimeout(this.keywordTimer)
     this.pendingAudioEventId = ''
     audioPlayer.stop()
   },
@@ -195,6 +200,7 @@ Page(tabSwipe.withTabSwipe({
       total,
       pageTotal,
       initialized: true,
+      realtimeHintCount: page === 1 ? 0 : this.data.realtimeHintCount,
       pageItems: this.buildPageItems(page, pageTotal),
       events: (data.records || []).map((item) => this.formatEvent(item))
     }
@@ -224,6 +230,40 @@ Page(tabSwipe.withTabSwipe({
   hasActiveFilters() {
     return Object.keys(this.data.filters).some((key) => this.data.filters[key] !== '')
   },
+  activeFilterCount(filters = this.data.filters) {
+    return Object.keys(filters || {}).filter((key) => filters[key] !== undefined && filters[key] !== '').length
+  },
+  syncFilterState(filters = this.data.filters) {
+    const count = this.activeFilterCount(filters)
+    this.setData({
+      filtersActive: count > 0,
+      activeFilterCount: count
+    })
+  },
+  applyListPreset() {
+    const preset = getApp().consumeEventListPreset()
+    if (!preset) return false
+    const filters = Object.assign({}, preset.filters || {})
+    const labels = preset.labels || {}
+    this.setData({
+      filters,
+      deviceLabel: labels.deviceLabel || '全部设备',
+      eventTypeLabel: labels.eventTypeLabel || '全部事件类型',
+      readLabel: labels.readLabel || (filters.read_status === 'UNREAD' ? '未读' : '全部阅读状态'),
+      fileLabel: labels.fileLabel || '全部录音状态',
+      pushLabel: labels.pushLabel || '全部通知状态',
+      startDate: '',
+      startTime: '',
+      endDate: '',
+      endTime: '',
+      filtersExpanded: !!preset.expand,
+      page: 1
+    }, () => {
+      this.syncFilterState(filters)
+      this.reload()
+    })
+    return true
+  },
   validateTimeRange() {
     const start = this.data.filters.start_time
     const end = this.data.filters.end_time
@@ -234,7 +274,19 @@ Page(tabSwipe.withTabSwipe({
     return true
   },
   onKeyword(event) {
-    this.setData({ 'filters.keyword': event.detail.value })
+    const filters = Object.assign({}, this.data.filters, { keyword: event.detail.value })
+    this.setData({ filters })
+    this.syncFilterState(filters)
+    clearTimeout(this.keywordTimer)
+    this.keywordTimer = setTimeout(() => this.reload(), 500)
+  },
+  clearKeyword() {
+    clearTimeout(this.keywordTimer)
+    const filters = Object.assign({}, this.data.filters, { keyword: '' })
+    this.setData({ filters }, () => {
+      this.syncFilterState(filters)
+      this.reload()
+    })
   },
   toggleFilters() {
     this.setData({ filtersExpanded: !this.data.filtersExpanded })
@@ -244,7 +296,7 @@ Page(tabSwipe.withTabSwipe({
     this.setData({
       eventTypeLabel: this.data.eventTypeOptions[index],
       'filters.event_type': this.data.eventTypeValues[index]
-    })
+    }, () => this.syncFilterState())
   },
   onDevice(event) {
     const index = Number(event.detail.value)
@@ -252,28 +304,28 @@ Page(tabSwipe.withTabSwipe({
     this.setData({
       deviceLabel: this.data.deviceOptions[index],
       'filters.device_id': deviceId
-    })
+    }, () => this.syncFilterState())
   },
   onReadStatus(event) {
     const index = Number(event.detail.value)
     this.setData({
       readLabel: this.data.readOptions[index],
       'filters.read_status': this.data.readValues[index]
-    })
+    }, () => this.syncFilterState())
   },
   onFileStatus(event) {
     const index = Number(event.detail.value)
     this.setData({
       fileLabel: this.data.fileOptions[index],
       'filters.file_status': this.data.fileValues[index]
-    })
+    }, () => this.syncFilterState())
   },
   onPushStatus(event) {
     const index = Number(event.detail.value)
     this.setData({
       pushLabel: this.data.pushOptions[index],
       'filters.push_status': this.data.pushValues[index]
-    })
+    }, () => this.syncFilterState())
   },
   onStartDate(event) {
     const startDate = event.detail.value
@@ -300,9 +352,12 @@ Page(tabSwipe.withTabSwipe({
     this.setData({ endTime }, this.updateTimeRange)
   },
   updateTimeRange() {
-    this.setData({
-      'filters.start_time': this.composeDateTime(this.data.startDate, this.data.startTime, '00:00'),
-      'filters.end_time': this.composeDateTime(this.data.endDate, this.data.endTime, '23:59')
+    const filters = Object.assign({}, this.data.filters, {
+      start_time: this.composeDateTime(this.data.startDate, this.data.startTime, '00:00'),
+      end_time: this.composeDateTime(this.data.endDate, this.data.endTime, '23:59')
+    })
+    this.setData({ filters }, () => {
+      this.syncFilterState(filters)
     })
   },
   composeDateTime(date, time, fallbackTime) {
@@ -321,7 +376,9 @@ Page(tabSwipe.withTabSwipe({
       startTime: '',
       endDate: '',
       endTime: '',
-      size: 10
+      size: 10,
+      filtersActive: false,
+      activeFilterCount: 0
     }, () => this.reload())
   },
   async loadDevices(force = false) {
@@ -349,8 +406,11 @@ Page(tabSwipe.withTabSwipe({
   },
   onRealtimeNewEvent() {
     if (this.pageVisible) {
-      this.scheduleReload()
+      this.setData({ realtimeHintCount: this.data.realtimeHintCount + 1 })
     }
+  },
+  refreshRealtimeEvents() {
+    this.setData({ page: 1, realtimeHintCount: 0 }, () => this.reload())
   },
   handleEmptyAction() {
     if (this.data.loadError) {
@@ -447,6 +507,11 @@ Page(tabSwipe.withTabSwipe({
     const target = event && event.detail ? event.detail : this.data.currentEvent
     const eventId = target && (target.event_id || target.eventId)
     if (!eventId) return
+    const fileStatus = target.file_status || target.fileStatus
+    if (fileStatus !== 'SUCCESS') {
+      wx.showToast({ title: target.file_status_text || '录音暂不可播放', icon: 'none' })
+      return
+    }
     if (audioPlayer.isPlaying(eventId)) {
       audioPlayer.stop()
       return

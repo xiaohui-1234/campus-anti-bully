@@ -15,14 +15,18 @@ Page(tabSwipe.withTabSwipe({
       onlineTotal: 0,
       todayEvents: 0,
       unreadEvents: 0
-    }
+    },
+    realtimeText: '实时离线',
+    realtimeClass: 'offline'
   },
   onLoad() {
     getApp().setNavLayout(this)
+    this.onRealtimeConnectionStatus(getApp().getRealtimeStatus())
   },
   onShow() {
     this.pageVisible = true
     getApp().setNavLayout(this)
+    this.onRealtimeConnectionStatus(getApp().getRealtimeStatus())
     getApp().deferEnsureEventRealtime()
     this.load()
   },
@@ -82,7 +86,32 @@ Page(tabSwipe.withTabSwipe({
     })
   },
   onRealtimeNewEvent() {
+    this.setData({
+      'stats.unreadEvents': this.data.stats.unreadEvents + 1
+    })
     this.scheduleLoad()
+  },
+  onRealtimeConnectionStatus(status) {
+    const state = {
+      CONNECTED: { realtimeText: '实时通道正常', realtimeClass: 'online' },
+      CONNECTING: { realtimeText: '正在连接实时通道', realtimeClass: 'connecting' },
+      RECONNECTING: { realtimeText: '实时通道恢复中', realtimeClass: 'connecting' },
+      OFFLINE: { realtimeText: '实时通道离线', realtimeClass: 'offline' }
+    }[status] || { realtimeText: '实时通道离线', realtimeClass: 'offline' }
+    this.setData(state)
+  },
+  openEvents() {
+    wx.switchTab({ url: '/pages/events/index' })
+  },
+  openUnreadEvents() {
+    getApp().setEventListPreset({
+      filters: { read_status: 'UNREAD' },
+      labels: { readLabel: '未读' }
+    })
+    wx.switchTab({ url: '/pages/events/index' })
+  },
+  openDevices() {
+    wx.switchTab({ url: '/pages/devices/index' })
   },
   scheduleLoad() {
     if (!this.pageVisible) return

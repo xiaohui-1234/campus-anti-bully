@@ -54,7 +54,7 @@ public class MinioStorageService implements StorageService {
     @Override
     public PresignedAccessInfo createAccessUrl(String fileKey, int expireSeconds) {
         try {
-            String fileUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+            String fileUrl = accessClient().getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(properties.getMinio().getBucket())
                     .object(fileKey)
@@ -65,6 +65,15 @@ public class MinioStorageService implements StorageService {
             log.error("Generate access url failed, object_key={}", fileKey, ex);
             throw new BizException(500, "生成访问地址失败");
         }
+    }
+
+    private MinioClient accessClient() {
+        CampusProperties.Minio minio = properties.getMinio();
+        String endpoint = hasText(minio.getPublicEndpoint()) ? minio.getPublicEndpoint() : minio.getEndpoint();
+        return MinioClient.builder()
+                .endpoint(endpoint)
+                .credentials(minio.getAccessKey(), minio.getSecretKey())
+                .build();
     }
 
     @Override
@@ -125,5 +134,9 @@ public class MinioStorageService implements StorageService {
             return "";
         }
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

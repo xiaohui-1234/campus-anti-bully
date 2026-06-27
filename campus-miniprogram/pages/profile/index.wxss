@@ -237,6 +237,13 @@
   height: 31rpx;
 }
 
+.dirty-tip {
+  margin-top: 12rpx;
+  color: #8b641f;
+  font-size: 24rpx;
+  text-align: center;
+}
+
 .action-list {
   margin-top: 24rpx;
   padding: 0 26rpx;

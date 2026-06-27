@@ -60,6 +60,7 @@
       <image src="../../assets/icons/profile/check-green.png" mode="aspectFit"></image>
       <text>{{actionLoading ? '保存中...' : (formDirty ? '保存资料' : '资料未修改')}}</text>
     </view>
+    <view wx:if="{{formDirty}}" class="dirty-tip">资料已修改，离开前记得保存</view>
   </view>
 
   <view class="panel action-list">

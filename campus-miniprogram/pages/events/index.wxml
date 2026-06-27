@@ -16,10 +16,11 @@
       <view class="search-bar">
         <image class="event-search-icon" src="../../assets/icons/event/search-gray.png" mode="aspectFit"></image>
         <input class="search-input" placeholder="搜索报警信息" value="{{filters.keyword}}" bindinput="onKeyword" confirm-type="search" bindconfirm="reload" />
+        <view wx:if="{{filters.keyword}}" class="search-clear" catchtap="clearKeyword">×</view>
       </view>
       <view class="filter-toggle" bindtap="toggleFilters">
         <image class="filter-icon-image" src="../../assets/icons/event/filter-teal.png" mode="aspectFit"></image>
-        <text>{{filtersExpanded ? '收起' : '筛选'}}</text>
+        <text>{{filtersExpanded ? '收起' : (activeFilterCount ? '筛选' + activeFilterCount : '筛选')}}</text>
         <text class="toggle-arrow {{filtersExpanded ? 'is-open' : ''}}">⌄</text>
       </view>
     </view>
@@ -95,8 +96,13 @@
     </view>
   </view>
 
+  <view wx:if="{{realtimeHintCount}}" class="realtime-hint" bindtap="refreshRealtimeEvents">
+    <view class="hint-dot"></view>
+    <text>收到 {{realtimeHintCount}} 条新报警，点击刷新列表</text>
+  </view>
+
   <view class="section-head">
-    <view class="section-title">事件列表</view>
+    <view class="section-title">事件列表<text wx:if="{{activeFilterCount}}" class="section-filter-count"> {{activeFilterCount}}项筛选</text></view>
     <view class="section-action refresh-action" bindtap="refreshCurrentPage">
       <image class="refresh-icon-image" src="../../assets/icons/event/refresh-teal.png" mode="aspectFit"></image>
       <text>刷新</text>
@@ -168,6 +174,10 @@
         <view class="detail-line"><text>录音</text><text>{{currentEvent.file_status_text}}</text></view>
         <view class="detail-line"><text>通知</text><text>{{currentEvent.push_status_text}}</text></view>
         <view class="detail-line"><text>时间</text><text>{{currentEvent.event_time || currentEvent.eventTime}}</text></view>
+      </view>
+      <view class="detail-audio {{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '' : 'disabled'}}" bindtap="playAudio">
+        <image src="{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '../../assets/icons/event/play-teal.png' : '../../assets/icons/event/play-gray.png'}}" mode="aspectFit"></image>
+        <text>{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '播放报警录音' : '录音暂不可播放'}}</text>
       </view>
       <view class="detail-actions">
         <view class="button danger" bindtap="deleteEvent">{{actionLoading ? '处理中...' : '删除事件'}}</view>

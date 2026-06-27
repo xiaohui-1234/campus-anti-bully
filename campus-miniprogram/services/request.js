@@ -7,6 +7,22 @@ let refreshWaiters = []
 function request(options) {
   return new Promise((resolve, reject) => {
     const token = storage.getAccessToken()
+    if (!token && requiresLogin(options.url)) {
+      if (!options.__retry && storage.getRefreshToken()) {
+        refreshAccessToken()
+          .then(() => request(Object.assign({}, options, { __retry: true })))
+          .then(resolve)
+          .catch((err) => {
+            redirectToLogin()
+            reject(err)
+          })
+        return
+      }
+      const err = { code: 401, message: '登录状态已失效，请重新登录' }
+      redirectToLogin()
+      reject(err)
+      return
+    }
     const header = Object.assign({}, options.header || {})
     if (token) {
       header.Authorization = `Bearer ${token}`
@@ -19,7 +35,22 @@ function request(options) {
       header,
       success: async (res) => {
         const body = res.data || {}
-        if (res.statusCode === 401 && !options.__retry) {
+        if (isUnauthorized(res, body)) {
+          if (shouldReturnAuthError(options.url)) {
+            reject(Object.assign({}, body, {
+              code: body.code || res.statusCode,
+              message: normalizeErrorMessage(body.message || '请求失败')
+            }))
+            return
+          }
+          if (options.__retry || skipAuthRefresh(options.url, options)) {
+            redirectToLogin()
+            reject(Object.assign({}, body, {
+              code: body.code || res.statusCode,
+              message: normalizeErrorMessage(body.message || '登录状态已失效，请重新登录')
+            }))
+            return
+          }
           try {
             await refreshAccessToken()
             const retryResult = await request(Object.assign({}, options, { __retry: true }))
@@ -44,6 +75,51 @@ function request(options) {
       }
     })
   })
+}
+
+function normalizedPath(url) {
+  return String(url || '').split('?')[0]
+}
+
+function isPublicEndpoint(url) {
+  const path = normalizedPath(url)
+  return [
+    '/auth/wx/login',
+    '/auth/openid/admin-login',
+    '/auth/password/login',
+    '/auth/password/register',
+    '/auth/password/reset',
+    '/auth/email-code/send'
+  ].includes(path)
+}
+
+function requiresLogin(url) {
+  return !isPublicEndpoint(url) && normalizedPath(url) !== '/auth/refresh'
+}
+
+function shouldReturnAuthError(url) {
+  const path = normalizedPath(url)
+  if (path === '/auth/email-code/send') {
+    return !storage.getAccessToken() && !storage.getRefreshToken()
+  }
+  return isPublicEndpoint(url)
+}
+
+function skipAuthRefresh(url, options) {
+  const path = normalizedPath(url)
+  if (options.__skipAuthRefresh || path === '/auth/refresh') return true
+  if ([
+    '/auth/wx/login',
+    '/auth/openid/admin-login',
+    '/auth/password/login',
+    '/auth/password/register',
+    '/auth/password/reset'
+  ].includes(path)) return true
+  return path === '/auth/email-code/send' && !storage.getAccessToken() && !storage.getRefreshToken()
+}
+
+function isUnauthorized(res, body) {
+  return res.statusCode === 401 || Number(body.code) === 401
 }
 
 function showError(options, message) {
@@ -88,19 +164,24 @@ function refreshAccessToken() {
       refreshWaiters.push({ resolve, reject })
     })
   }
+  const refreshToken = storage.getRefreshToken()
+  if (!refreshToken) {
+    return Promise.reject({ code: 401, message: 'missing refresh token' })
+  }
   refreshing = true
   return new Promise((resolve, reject) => {
     wx.request({
       url: `${env.baseUrl}/auth/refresh`,
       method: 'POST',
-      data: { refresh_token: storage.getRefreshToken() },
+      data: { refresh_token: refreshToken },
       success: (res) => {
         const body = res.data || {}
-        if (body.code === 0) {
+        if (res.statusCode === 200 && body.code === 0 && body.data && body.data.access_token) {
           storage.setTokens(body.data)
           resolve(body.data)
           flushWaiters(null, body.data)
         } else {
+          storage.clearTokens()
           reject(body)
           flushWaiters(body)
         }

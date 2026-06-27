@@ -28,6 +28,12 @@ Page(tabSwipe.withTabSwipe({
     getApp().deferEnsureEventRealtime()
     this.reload()
   },
+  onHide() {
+    clearTimeout(this.searchTimer)
+  },
+  onUnload() {
+    clearTimeout(this.searchTimer)
+  },
   async onPullDownRefresh() {
     try {
       await this.reload(true)
@@ -39,6 +45,7 @@ Page(tabSwipe.withTabSwipe({
     this.loadMore()
   },
   async reload(force = false) {
+    if (!force && !this.data.keyword && this.lastLoadedAt && Date.now() - this.lastLoadedAt < 5000) return
     const requestId = (this.loadRequestId || 0) + 1
     this.loadRequestId = requestId
     this.setData({ loading: true, loadError: false })
@@ -54,6 +61,7 @@ Page(tabSwipe.withTabSwipe({
         hasMore: devices.length < this.allDevices.length,
         initialized: true
       })
+      this.lastLoadedAt = Date.now()
     } catch (err) {
       if (requestId === this.loadRequestId) {
         this.setData({ loadError: true })
@@ -75,9 +83,17 @@ Page(tabSwipe.withTabSwipe({
     })
     const index = this.data.devices.findIndex((item) => (item.device_id || item.deviceId) === deviceId)
     if (index < 0) return
+    const currentDeviceId = this.data.currentDevice && (this.data.currentDevice.device_id || this.data.currentDevice.deviceId)
+    const currentUpdates = currentDeviceId === deviceId
+      ? {
+        'currentDevice.online_status': status.online_status || status.onlineStatus,
+        'currentDevice.last_online_time': status.last_online_time || status.lastOnlineTime
+      }
+      : {}
     this.setData({
       [`devices[${index}].online_status`]: status.online_status || status.onlineStatus,
-      [`devices[${index}].last_online_time`]: status.last_online_time || status.lastOnlineTime
+      [`devices[${index}].last_online_time`]: status.last_online_time || status.lastOnlineTime,
+      ...currentUpdates
     })
   },
   loadMore() {
@@ -94,6 +110,12 @@ Page(tabSwipe.withTabSwipe({
       keyword,
       search_active: true
     })
+    clearTimeout(this.searchTimer)
+    this.searchTimer = setTimeout(() => this.reload(true), 450)
+  },
+  clearKeyword() {
+    clearTimeout(this.searchTimer)
+    this.setData({ keyword: '', search_active: false }, () => this.reload(true))
   },
   onSearchFocus() {
     this.setData({ search_active: true })
@@ -110,7 +132,7 @@ Page(tabSwipe.withTabSwipe({
       return
     }
     if (this.data.keyword) {
-      this.setData({ keyword: '', search_active: false }, () => this.reload())
+      this.clearKeyword()
       return
     }
     this.openBind()

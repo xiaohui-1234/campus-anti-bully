@@ -69,6 +69,7 @@ Page({
   },
   onUnload() {
     this.clearCountdowns()
+    wx.showTabBar({ animation: false, fail() {} })
   },
   async onPullDownRefresh() {
     try {
@@ -108,6 +109,7 @@ Page({
     }
   },
   goBack() {
+    wx.showTabBar({ animation: false, fail() {} })
     if (getCurrentPages().length > 1) {
       wx.navigateBack()
       return
@@ -133,7 +135,7 @@ Page({
     this.setData({ 'activateForm.security_email': event.detail.value })
   },
   onActivateCode(event) {
-    this.setData({ 'activateForm.verify_code': event.detail.value })
+    this.setData({ 'activateForm.verify_code': this.normalizeCode(event.detail.value) })
   },
   onActivatePassword(event) {
     this.setData({ 'activateForm.password': event.detail.value })
@@ -142,13 +144,13 @@ Page({
     this.setData({ 'activateForm.confirm_password': event.detail.value })
   },
   onOldEmailCode(event) {
-    this.setData({ 'emailForm.old_verify_code': event.detail.value })
+    this.setData({ 'emailForm.old_verify_code': this.normalizeCode(event.detail.value) })
   },
   onNewEmail(event) {
     this.setData({ 'emailForm.new_security_email': event.detail.value })
   },
   onNewEmailCode(event) {
-    this.setData({ 'emailForm.new_verify_code': event.detail.value })
+    this.setData({ 'emailForm.new_verify_code': this.normalizeCode(event.detail.value) })
   },
   onOldPassword(event) {
     this.setData({ 'passwordForm.old_password': event.detail.value })
@@ -163,7 +165,7 @@ Page({
     this.setData({ 'passwordResetForm.security_email': event.detail.value })
   },
   onResetCode(event) {
-    this.setData({ 'passwordResetForm.verify_code': event.detail.value })
+    this.setData({ 'passwordResetForm.verify_code': this.normalizeCode(event.detail.value) })
   },
   onResetPassword(event) {
     this.setData({ 'passwordResetForm.new_password': event.detail.value })
@@ -492,6 +494,9 @@ Page({
       next[key] = typeof value === 'string' ? value.trim() : value
     })
     return next
+  },
+  normalizeCode(value) {
+    return String(value || '').replace(/\D/g, '').slice(0, 6)
   },
   startCountdown(key) {
     this.clearCountdown(key)

@@ -180,6 +180,9 @@ function reconnect() {
     try {
       if (storage.getRefreshToken()) {
         await request.refreshAccessToken()
+      } else if (storage.getAccessToken()) {
+        redirectToLogin()
+        return
       }
     } catch (err) {
       redirectToLogin()

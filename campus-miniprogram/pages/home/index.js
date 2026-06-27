@@ -169,6 +169,13 @@ Page(tabSwipe.withTabSwipe({
   openAllEvents() {
     wx.switchTab({ url: '/pages/events/index' })
   },
+  openUnreadEvents() {
+    getApp().setEventListPreset({
+      filters: { read_status: 'UNREAD' },
+      labels: { readLabel: '未读' }
+    })
+    wx.switchTab({ url: '/pages/events/index' })
+  },
   handleEmptyAction() {
     if (this.data.loadError) {
       this.bootstrap(true)

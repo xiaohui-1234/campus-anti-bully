@@ -40,7 +40,9 @@
         <el-descriptions-item label="对象 Key 表达式">{{ config.storage?.object_key_pattern }}</el-descriptions-item>
         <el-descriptions-item label="MQTT Broker">{{ config.mqtt?.broker_url }}</el-descriptions-item>
         <el-descriptions-item label="MQTT Client ID">{{ config.mqtt?.client_id }}</el-descriptions-item>
-        <el-descriptions-item label="MinIO Endpoint">{{ config.minio?.endpoint }}</el-descriptions-item>
+        <el-descriptions-item label="MinIO Internal Endpoint">{{ config.minio?.internal_endpoint || config.minio?.endpoint }}</el-descriptions-item>
+        <el-descriptions-item label="MinIO Public Endpoint">{{ config.minio?.public_endpoint }}</el-descriptions-item>
+        <el-descriptions-item label="MinIO Upload Endpoint">{{ config.minio?.upload_endpoint }}</el-descriptions-item>
         <el-descriptions-item label="MinIO AccessKey">{{ config.minio?.access_key }}</el-descriptions-item>
       </el-descriptions>
     </el-card>

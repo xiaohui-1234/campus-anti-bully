@@ -1,127 +1,129 @@
 server:
-  port: 8080
+  port: 8080      #监听端口
   servlet:
     encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
+      charset: UTF-8       #请求和响应字符集
+      enabled: true        #启用字符编码配置
+      force: true          #强制使用指定字符集
 
 spring:
   application:
-    name: campus-server
+    name: campus-server    #应用名称
   profiles:
-    active: dev
+    active: dev            #当前激活环境
   jackson:
-    property-naming-strategy: SNAKE_CASE
-    time-zone: Asia/Shanghai
-    date-format: yyyy-MM-dd HH:mm:ss
+    property-naming-strategy: SNAKE_CASE     #JSON字段命名策略，统一返回snake_case
+    time-zone: Asia/Shanghai                 #JSON时间序列化时区
+    date-format: yyyy-MM-dd HH:mm:ss         #JSON时间格式
   servlet:
     multipart:
-      max-file-size: 2MB
-      max-request-size: 3MB
+      max-file-size: 2MB                     #单个上传文件最大大小
+      max-request-size: 3MB                  #单次请求最大大小
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: zhouyuhui
+    driver-class-name: com.mysql.cj.jdbc.Driver     #MySQL驱动
+    url: jdbc:mysql://localhost:3306/campus?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai     #MySQL连接地址
+    username: root                                  #MySQL用户名
+    password: zhouyuhui                             #MySQL密码
   data:
     redis:
-      host: 47.116.107.124
-      port: 6379
-      password: zhouyuhui
-      database: 0
+      host: 47.116.107.124                          #Redis服务器地址
+      port: 6379                                    #Redis端口
+      password: zhouyuhui                           #Redis密码
+      database: 0                                   #Redis数据库编号
   mail:
-    host: ${CAMPUS_MAIL_HOST:smtp.qq.com}
-    port: ${CAMPUS_MAIL_PORT:465}
-    username: ${CAMPUS_MAIL_USERNAME:3832793423@qq.com}
-    password: ${CAMPUS_MAIL_PASSWORD:rafvkhakgrvccfid}
-    protocol: ${CAMPUS_MAIL_PROTOCOL:smtps}
-    default-encoding: UTF-8
-    test-connection: false
+    host: ${CAMPUS_MAIL_HOST:smtp.qq.com}            #SMTP服务器地址
+    port: ${CAMPUS_MAIL_PORT:465}                    #SMTP端口
+    username: ${CAMPUS_MAIL_USERNAME:3832793423@qq.com}      #SMTP用户名
+    password: ${CAMPUS_MAIL_PASSWORD:rafvkhakgrvccfid}       #SMTP授权码或密码
+    protocol: ${CAMPUS_MAIL_PROTOCOL:smtps}          #邮件协议
+    default-encoding: UTF-8                          #邮件默认编码
+    test-connection: false                           #启动时是否测试邮件连接
     properties:
       mail:
         smtp:
-          auth: ${CAMPUS_MAIL_SMTP_AUTH:true}
+          auth: ${CAMPUS_MAIL_SMTP_AUTH:true}        #是否启用SMTP认证
           ssl:
-            enable: ${CAMPUS_MAIL_SMTP_SSL_ENABLE:true}
+            enable: ${CAMPUS_MAIL_SMTP_SSL_ENABLE:true}      #是否启用SSL
           starttls:
-            enable: ${CAMPUS_MAIL_SMTP_STARTTLS_ENABLE:false}
-            required: ${CAMPUS_MAIL_SMTP_STARTTLS_REQUIRED:false}
-          connectiontimeout: ${CAMPUS_MAIL_CONNECTION_TIMEOUT:5000}
-          timeout: ${CAMPUS_MAIL_TIMEOUT:5000}
-          writetimeout: ${CAMPUS_MAIL_WRITE_TIMEOUT:5000}
+            enable: ${CAMPUS_MAIL_SMTP_STARTTLS_ENABLE:false}        #是否启用STARTTLS
+            required: ${CAMPUS_MAIL_SMTP_STARTTLS_REQUIRED:false}    #是否强制STARTTLS
+          connectiontimeout: ${CAMPUS_MAIL_CONNECTION_TIMEOUT:5000}  #SMTP连接超时毫秒数
+          timeout: ${CAMPUS_MAIL_TIMEOUT:5000}                       #SMTP读取超时毫秒数
+          writetimeout: ${CAMPUS_MAIL_WRITE_TIMEOUT:5000}            #SMTP写入超时毫秒数
 
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true
+    map-underscore-to-camel-case: true       #数据库下划线字段自动映射Java驼峰属性
   global-config:
     db-config:
-      id-type: auto
+      id-type: auto                          #主键自增策略
 
 springdoc:
   api-docs:
-    enabled: true
+    enabled: true                            #是否启用OpenAPI文档接口
   swagger-ui:
-    enabled: true
+    enabled: true                            #是否启用Swagger UI
 
 campus:
   security:
     jwt:
-      access-token-expire-seconds: 1800
-      refresh-token-expire-seconds: 604800
-      secret: "please-change-this-secret-at-least-32-bytes"
+      access-token-expire-seconds: 1800      #访问令牌有效期秒数
+      refresh-token-expire-seconds: 604800   #刷新令牌有效期秒数
+      secret: "please-change-this-secret-at-least-32-bytes"      #JWT签名密钥
     password:
-      min-length: 8
-      max-length: 64
-      bcrypt-strength: 10
+      min-length: 8                          #密码最小长度
+      max-length: 64                         #密码最大长度
+      bcrypt-strength: 10                    #BCrypt加密强度
     email-code:
-      code-length: 6
-      ttl-seconds: 300
-      resend-interval-seconds: 60
-      max-attempts: 5
-      max-ip-sends: 20
-      mock: false
-      from: ${CAMPUS_MAIL_FROM:3832793423@qq.com}
+      code-length: 6                         #邮箱验证码长度
+      ttl-seconds: 300                       #邮箱验证码有效期秒数
+      resend-interval-seconds: 60            #同一邮箱重发间隔秒数
+      max-attempts: 5                        #单个验证码最大尝试次数
+      max-ip-sends: 20                       #单个IP发送次数限制
+      mock: false                            #是否启用模拟验证码
+      from: ${CAMPUS_MAIL_FROM:3832793423@qq.com}      #发件人地址
     security-email-change:
-      grant-ttl-seconds: 600
-      ticket-bytes: 32
+      grant-ttl-seconds: 600                 #安全邮箱变更授权有效期秒数
+      ticket-bytes: 32                       #安全邮箱变更凭证随机字节数
     login-limit:
-      enabled: true
-      max-fail-count: 5
-      lock-seconds: 900
+      enabled: true                          #是否启用登录失败限制
+      max-fail-count: 5                      #最大连续登录失败次数
+      lock-seconds: 900                      #登录锁定秒数
     crypto:
-      hmac-secret: ${CAMPUS_HMAC_SECRET:dev-hmac-secret-change-me}
-      aes-key: ${CAMPUS_AES_KEY:dev-aes-key-change-me}
+      hmac-secret: ${CAMPUS_HMAC_SECRET:dev-hmac-secret-change-me}      #HMAC哈希密钥
+      aes-key: ${CAMPUS_AES_KEY:dev-aes-key-change-me}                  #AES加密密钥
   wx:
     miniapp:
-      app-id: "wx28559fd52a9bef53"
-      app-secret: "d4379381a41173222cb7feba03fd9504"
+      app-id: "wx28559fd52a9bef53"                            #微信小程序ID,用来返回Openid
+      app-secret: "d4379381a41173222cb7feba03fd9504"          #小程序密钥，在公众号平台获取
   mqtt:
-    enabled: true
-    broker-url: "tcp://47.116.107.124:1883"
-    client-id: "campus-server2"
-    username: "root2"
-    password: "@Zyh056610"
-    qos: 1
-    completion-timeout-ms: 5000
+    enabled: true         #开关
+    broker-url: "tcp://47.116.107.124:1883"     #MQTT服务器链接url
+    client-id: "campus-server2"                 #分配给服务器的clientID
+    username: "root2"                           #用户名
+    password: "@Zyh056610"                      #密码
+    qos: 1                                      #Qos等级
+    completion-timeout-ms: 5000                 #MQTT断开等操作等待完成的超时时间毫秒数
   minio:
-    endpoint: "http://47.116.107.124:9000"
-    access-key: "minioadmin"
-    secret-key: "minioadmin123"
-    bucket: "campus"
-    public-endpoint: "https://oss-shanghai.1314-520.xyz"
+    endpoint: "http://47.116.107.124:9000"          #旧接口兼容地址
+    internal-endpoint: "http://47.116.107.124:9000" #服务器操作minio的接口地址
+    access-key: "minioadmin"                        #minio账号
+    secret-key: "minioadmin123"                     #minio密钥
+    bucket: "campus"                                #指定的桶分区
+    public-endpoint: "https://oss-shanghai.1314-520.xyz"      #头像，音频链接等访问接口地址（通常用Https保证安全）
+    upload-endpoint: "http://47.116.107.124:9000"             #给设备拼接上传链接（通常用Http保证兼容）
   cache:
-    mqtt-dedup-ttl-seconds: 10
-    device-online-ttl-seconds: 90
-    bind-code-ttl-seconds: 60
-    access-url-ttl-seconds: 3600
-    upload-url-ttl-seconds: 300
-    jwt-blacklist-ttl-seconds: 7200
-    unpulled-event-cache-ttl-seconds: 300
+    mqtt-dedup-ttl-seconds: 10        #一条MQTT消息去重持续时间，时间内去除重复消息
+    device-online-ttl-seconds: 90     #设备在线缓冲时间，超过这个时间没有上报在线自动下线
+    bind-code-ttl-seconds: 60         #设备绑定码缓存生效时间
+    access-url-ttl-seconds: 3600      #音频访问下载链接有效时间
+    upload-url-ttl-seconds: 300       #设备音频上传链接有效时间
+    jwt-blacklist-ttl-seconds: 7200   #jwt token黑名单持续时间，一些安全操作后，jwt无法强制回收，使用黑名单限制
+    unpulled-event-cache-ttl-seconds: 300     #未拉取事件缓存，方便小程序或客户端短时间内拉取未读/未同步事件，避免WebSocket不在线时漏掉即时提醒
   storage:
-    object-key-pattern: "{product_type}/audio/{device_id}/{yyyy}/{MM}/{dd}/{event_id}.{ext}"
-    avatar-key-pattern: "avatar/{user_id}.{ext}"
-    avatar-max-size-mb: 2
+    object-key-pattern: "{product_type}/audio/{device_id}/{yyyy}/{MM}/{dd}/{event_id}.{ext}"  #音频文件键名表达式
+    avatar-key-pattern: "avatar/{user_id}.{ext}"      #头像键名表达式
+    avatar-max-size-mb: 2                     #上传的头像最大MB数
   event:
-    default-page-size: 10
-    max-page-size: 100
+    default-page-size: 10     #默认分页容量
+    max-page-size: 100        #最大容量

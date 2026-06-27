@@ -94,10 +94,32 @@ public class CampusProperties {
     @Data
     public static class Minio {
         private String endpoint;
+        private String internalEndpoint;
         private String accessKey;
         private String secretKey;
         private String bucket;
         private String publicEndpoint;
+        private String uploadEndpoint;
+
+        public String getEffectiveInternalEndpoint() {
+            return firstText(internalEndpoint, endpoint);
+        }
+
+        public String getEffectivePublicEndpoint() {
+            return firstText(publicEndpoint, getEffectiveInternalEndpoint());
+        }
+
+        public String getEffectiveUploadEndpoint() {
+            return firstText(uploadEndpoint, getEffectiveInternalEndpoint());
+        }
+
+        private String firstText(String primary, String fallback) {
+            return hasText(primary) ? primary : fallback;
+        }
+
+        private boolean hasText(String value) {
+            return value != null && !value.isBlank();
+        }
     }
 
     @Data

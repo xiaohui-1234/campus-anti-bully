@@ -12,8 +12,8 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,11 +24,22 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MinioStorageService implements StorageService {
 
-    private final MinioClient minioClient;
+    private final MinioClient internalMinioClient;
+    private final MinioClient publicMinioClient;
+    private final MinioClient uploadMinioClient;
     private final CampusProperties properties;
+
+    public MinioStorageService(@Qualifier("internalMinioClient") MinioClient internalMinioClient,
+                               @Qualifier("publicMinioClient") MinioClient publicMinioClient,
+                               @Qualifier("uploadMinioClient") MinioClient uploadMinioClient,
+                               CampusProperties properties) {
+        this.internalMinioClient = internalMinioClient;
+        this.publicMinioClient = publicMinioClient;
+        this.uploadMinioClient = uploadMinioClient;
+        this.properties = properties;
+    }
 
     @Override
     public PresignedUploadInfo createUploadUrl(Device device, String eventId, String filename, String contentType) {
@@ -37,7 +48,7 @@ public class MinioStorageService implements StorageService {
             String ext = FileUtil.extension(filename, defaultExt(contentType));
             String objectKey = buildObjectKey(device, eventId, ext);
             int expireSeconds = (int) properties.getCache().getUploadUrlTtlSeconds();
-            String uploadUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+            String uploadUrl = uploadMinioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.PUT)
                     .bucket(properties.getMinio().getBucket())
                     .object(objectKey)
@@ -54,7 +65,7 @@ public class MinioStorageService implements StorageService {
     @Override
     public PresignedAccessInfo createAccessUrl(String fileKey, int expireSeconds) {
         try {
-            String fileUrl = accessClient().getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+            String fileUrl = publicMinioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .method(Method.GET)
                     .bucket(properties.getMinio().getBucket())
                     .object(fileKey)
@@ -67,15 +78,6 @@ public class MinioStorageService implements StorageService {
         }
     }
 
-    private MinioClient accessClient() {
-        CampusProperties.Minio minio = properties.getMinio();
-        String endpoint = hasText(minio.getPublicEndpoint()) ? minio.getPublicEndpoint() : minio.getEndpoint();
-        return MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(minio.getAccessKey(), minio.getSecretKey())
-                .build();
-    }
-
     @Override
     public String uploadAvatar(String userId, MultipartFile file, String ext) {
         try {
@@ -83,13 +85,13 @@ public class MinioStorageService implements StorageService {
             String key = properties.getStorage().getAvatarKeyPattern()
                     .replace("{user_id}", userId)
                     .replace("{ext}", ext);
-            minioClient.putObject(PutObjectArgs.builder()
+            internalMinioClient.putObject(PutObjectArgs.builder()
                     .bucket(properties.getMinio().getBucket())
                     .object(key)
                     .contentType(file.getContentType())
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .build());
-            return trimSlash(properties.getMinio().getPublicEndpoint()) + "/" + properties.getMinio().getBucket() + "/" + key;
+            return trimSlash(properties.getMinio().getEffectivePublicEndpoint()) + "/" + properties.getMinio().getBucket() + "/" + key;
         } catch (Exception ex) {
             log.error("Upload avatar failed, user_id={}", userId, ex);
             throw new BizException(500, "头像上传失败");
@@ -98,9 +100,9 @@ public class MinioStorageService implements StorageService {
 
     private void ensureBucket() throws Exception {
         String bucket = properties.getMinio().getBucket();
-        boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+        boolean exists = internalMinioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
         if (!exists) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+            internalMinioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
         }
     }
 
@@ -136,7 +138,4 @@ public class MinioStorageService implements StorageService {
         return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
-    }
 }

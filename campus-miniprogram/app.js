@@ -23,6 +23,9 @@ App({
     boundDevices: [],
     boundDevicesFetchedAt: 0,
     boundDevicesLoading: null,
+    boundDevicesCacheVersion: 0,
+    boundDevicesChangedAt: 0,
+    removedBoundDeviceIds: [],
     unreadBadgeFetchedAt: 0,
     unreadBadgeLoading: null,
     eventListPreset: null
@@ -151,10 +154,13 @@ App({
     if (this.globalData.boundDevicesLoading) {
       return this.globalData.boundDevicesLoading
     }
+    const cacheVersion = this.globalData.boundDevicesCacheVersion || 0
     const loading = deviceApi.listAll({ showError: false })
       .then((data) => {
-        this.globalData.boundDevices = data.records || []
-        this.globalData.boundDevicesFetchedAt = Date.now()
+        if (cacheVersion === (this.globalData.boundDevicesCacheVersion || 0)) {
+          this.globalData.boundDevices = data.records || []
+          this.globalData.boundDevicesFetchedAt = Date.now()
+        }
         return data
       })
       .finally(() => {
@@ -163,8 +169,34 @@ App({
     this.globalData.boundDevicesLoading = loading
     return loading
   },
-  invalidateBoundDevices() {
+  invalidateBoundDevices(deviceId, restoredDeviceId) {
+    this.globalData.boundDevicesCacheVersion = (this.globalData.boundDevicesCacheVersion || 0) + 1
+    this.globalData.boundDevicesChangedAt = Date.now()
     this.globalData.boundDevicesFetchedAt = 0
+    this.globalData.boundDevicesLoading = null
+    if (restoredDeviceId) {
+      this.globalData.removedBoundDeviceIds = (this.globalData.removedBoundDeviceIds || [])
+        .filter((item) => item !== restoredDeviceId)
+    }
+    if (!deviceId) return
+    this.globalData.boundDevices = (this.globalData.boundDevices || [])
+      .filter((item) => (item.device_id || item.deviceId) !== deviceId)
+    this.globalData.removedBoundDeviceIds = Array.from(new Set([
+      deviceId,
+      ...(this.globalData.removedBoundDeviceIds || [])
+    ])).slice(0, 20)
+    this.globalData.pushedEvents = (this.globalData.pushedEvents || [])
+      .filter((item) => (item.device_id || item.deviceId) !== deviceId)
+    this.globalData.pushedEventIds = this.globalData.pushedEvents
+      .map((item) => item && (item.event_id || item.eventId))
+      .filter(Boolean)
+    this.setHomePushBadge(this.globalData.pushedEvents.length)
+    this.notifyPages('onBoundDeviceRemoved', { device_id: deviceId })
+    if (this.globalData.boundDevices.length) {
+      this.refreshUnreadEventBadge(true)
+    } else {
+      this.syncUnreadEventBadge(0)
+    }
   },
   updateBoundDeviceStatus(status) {
     const deviceId = status && (status.device_id || status.deviceId)
@@ -264,6 +296,9 @@ App({
     this.globalData.boundDevices = []
     this.globalData.boundDevicesFetchedAt = 0
     this.globalData.boundDevicesLoading = null
+    this.globalData.boundDevicesCacheVersion = 0
+    this.globalData.boundDevicesChangedAt = 0
+    this.globalData.removedBoundDeviceIds = []
     this.globalData.unreadBadgeFetchedAt = 0
     this.globalData.unreadBadgeLoading = null
     this.globalData.eventListPreset = null

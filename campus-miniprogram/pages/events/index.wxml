@@ -175,9 +175,12 @@
         <view class="detail-line"><text>通知</text><text>{{currentEvent.push_status_text}}</text></view>
         <view class="detail-line"><text>时间</text><text>{{currentEvent.event_time || currentEvent.eventTime}}</text></view>
       </view>
-      <view class="detail-audio {{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '' : 'disabled'}}" bindtap="playAudio">
-        <image src="{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '../../assets/icons/event/play-teal.png' : '../../assets/icons/event/play-gray.png'}}" mode="aspectFit"></image>
-        <text>{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '播放报警录音' : '录音暂不可播放'}}</text>
+      <view class="detail-audio {{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '' : 'disabled'}} {{audioState.playing && (audioState.event_id === currentEvent.event_id || audioState.event_id === currentEvent.eventId) ? 'playing' : ''}}" catchtap="playAudio">
+        <view class="detail-audio-progress" style="width: {{audioState.playing && (audioState.event_id === currentEvent.event_id || audioState.event_id === currentEvent.eventId) ? audioState.progress : 0}}%"></view>
+        <view class="detail-audio-content">
+          <image src="{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? '../../assets/icons/event/play-teal.png' : '../../assets/icons/event/play-gray.png'}}" mode="aspectFit"></image>
+          <text>{{currentEvent.file_status === 'SUCCESS' || currentEvent.fileStatus === 'SUCCESS' ? (audioState.playing && (audioState.event_id === currentEvent.event_id || audioState.event_id === currentEvent.eventId) ? '停止播放' : '播放报警录音') : '录音暂不可播放'}}</text>
+        </view>
       </view>
       <view class="detail-actions">
         <view class="button danger" bindtap="deleteEvent">{{actionLoading ? '处理中...' : '删除事件'}}</view>

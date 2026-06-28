@@ -18,7 +18,7 @@
     <view class="profile-card-glow one"></view>
     <view class="profile-card-glow two"></view>
     <view class="avatar-wrap">
-      <image wx:if="{{form.avatar_url || form.avatarUrl}}" class="avatar" src="{{form.avatar_url || form.avatarUrl}}" mode="aspectFill"></image>
+      <image wx:if="{{avatarDisplayUrl}}" class="avatar" src="{{avatarDisplayUrl}}" mode="aspectFill"></image>
       <view wx:else class="avatar avatar-empty">我</view>
       <view class="avatar-status">
         <image src="../../assets/icons/profile/check-green.png" mode="aspectFit"></image>

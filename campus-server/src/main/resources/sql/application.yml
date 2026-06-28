@@ -110,7 +110,7 @@ campus:
     access-key: "minioadmin"                        #minio账号
     secret-key: "minioadmin123"                     #minio密钥
     bucket: "campus"                                #指定的桶分区
-    public-endpoint: "https://oss-shanghai.1314-520.xyz"      #头像，音频链接等访问接口地址（通常用Https保证安全）
+    public-endpoint: "https://oss.1314-520.xyz"      #头像，音频链接等访问接口地址（通常用Https保证安全）
     upload-endpoint: "http://47.116.107.124:9000"             #给设备拼接上传链接（通常用Http保证兼容）
   cache:
     mqtt-dedup-ttl-seconds: 10        #一条MQTT消息去重持续时间，时间内去除重复消息
@@ -122,7 +122,7 @@ campus:
     unpulled-event-cache-ttl-seconds: 300     #未拉取事件缓存，方便小程序或客户端短时间内拉取未读/未同步事件，避免WebSocket不在线时漏掉即时提醒
   storage:
     object-key-pattern: "{product_type}/audio/{device_id}/{yyyy}/{MM}/{dd}/{event_id}.{ext}"  #音频文件键名表达式
-    avatar-key-pattern: "avatar/{user_id}.{ext}"      #头像键名表达式
+    avatar-key-pattern: "avatar/{user_id}/{timestamp}-{uuid}.{ext}"      #头像键名表达式
     avatar-max-size-mb: 2                     #上传的头像最大MB数
   event:
     default-page-size: 10     #默认分页容量

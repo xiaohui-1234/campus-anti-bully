@@ -64,16 +64,20 @@ function play(src, options) {
     wx.showToast({ title: '录音地址无效', icon: 'none' })
     return
   }
+  if (!/^https:\/\//i.test(src)) {
+    wx.showToast({ title: '录音地址不是 HTTPS', icon: 'none' })
+    return
+  }
 
   playToken += 1
   const token = playToken
   destroyCurrentAudio(true)
 
   const audio = wx.createInnerAudioContext()
+  audio.obeyMuteSwitch = false
   currentAudio = audio
   currentEventId = eventId
   currentHandlers = options || null
-  audio.src = src
   audio.onPlay(() => {
     emitState(true, 0, true)
   })
@@ -93,6 +97,7 @@ function play(src, options) {
       wx.showToast({ title: '播放失败', icon: 'none' })
     }
   })
+  audio.src = src
 
   if (token === playToken) {
     audio.play()

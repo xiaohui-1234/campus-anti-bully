@@ -64,9 +64,12 @@
       <view class="detail-handle"></view>
       <view class="detail-title">{{currentDevice.device_name || currentDevice.deviceName || currentDevice.device_id}}</view>
       <view class="detail-desc">这些信息只影响当前用户看到的设备备注</view>
-      <view class="detail-status-row">
-        <view class="detail-status {{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? 'online' : ''}}">{{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? '在线' : '离线'}}</view>
-        <view class="detail-time">最近在线：{{currentDevice.last_online_time || currentDevice.lastOnlineTime || '暂无记录'}}</view>
+      <view class="detail-status-card {{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? 'online' : 'offline'}}">
+        <view class="detail-status-dot"></view>
+        <view class="detail-status-copy">
+          <view class="detail-status-title">{{(currentDevice.online_status || currentDevice.onlineStatus) === 'ONLINE' ? '当前在线' : '当前离线'}}</view>
+          <view class="detail-status-desc">最近在线 {{currentDevice.last_online_time || currentDevice.lastOnlineTime || '暂无记录'}}</view>
+        </view>
       </view>
       <input class="input form-input" placeholder="设备名称" maxlength="50" value="{{editForm.device_name}}" bindinput="onEditName" />
       <input class="input form-input" placeholder="地点" maxlength="100" value="{{editForm.location}}" bindinput="onEditLocation" />

@@ -11,6 +11,7 @@ Page(tabSwipe.withTabSwipe({
     navStyle: '',
     contentStyle: '',
     form: {},
+    avatarDisplayUrl: '',
     roleLabel: '普通用户',
     actionLoading: false,
     formDirty: false
@@ -40,8 +41,10 @@ Page(tabSwipe.withTabSwipe({
     this.setData({ loading: true, loadError: false })
     try {
       const user = await userApi.me()
+      const avatarUrl = user && (user.avatar_url || user.avatarUrl)
       this.setData({
         form: user || {},
+        avatarDisplayUrl: this.avatarDisplayUrl(avatarUrl),
         roleLabel: this.roleText(user && user.role),
         formDirty: false,
         initialized: true
@@ -133,7 +136,11 @@ Page(tabSwipe.withTabSwipe({
           const data = await userApi.uploadAvatar(filePath)
           const avatarUrl = data && (data.avatar_url || data.avatarUrl)
           if (avatarUrl) {
-            this.setData({ 'form.avatar_url': avatarUrl })
+            this.setData({
+              'form.avatar_url': avatarUrl,
+              'form.avatarUrl': avatarUrl,
+              avatarDisplayUrl: this.avatarDisplayUrl(avatarUrl)
+            })
           }
           wx.showToast({ title: '已上传' })
         } finally {
@@ -141,6 +148,11 @@ Page(tabSwipe.withTabSwipe({
         }
       }
     })
+  },
+  avatarDisplayUrl(url) {
+    if (!url) return ''
+    const separator = url.indexOf('?') >= 0 ? '&' : '?'
+    return `${url}${separator}_t=${Date.now()}`
   },
   logout() {
     this.endSession('退出登录', '退出后将停止接收当前账号的实时报警。')

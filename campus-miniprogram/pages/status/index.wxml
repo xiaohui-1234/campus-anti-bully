@@ -13,17 +13,6 @@
   <loading-view loading="{{loading && !initialized}}" />
   <empty-state wx:if="{{loadError && !loading}}" title="状态加载失败" desc="请检查网络连接后重试" action-text="重新加载" bind:action="load" />
   <block wx:else>
-    <view class="realtime-card {{realtimeClass}}">
-      <view class="realtime-main">
-        <view class="realtime-pulse"></view>
-        <view>
-          <view class="realtime-title">{{realtimeText}}</view>
-          <view class="realtime-desc">离线时会自动启用事件补拉兜底</view>
-        </view>
-      </view>
-      <view class="realtime-refresh" bindtap="load">刷新</view>
-    </view>
-
     <view class="stats">
       <view class="stat">
         <view class="stat-icon device">
@@ -61,21 +50,6 @@
         <text>状态说明</text>
       </view>
       <view class="note-text">设备在线状态会根据设备心跳自动更新；网络恢复后，离线期间的报警事件会自动补齐。</view>
-    </view>
-
-    <view class="quick-links">
-      <view class="quick-link" bindtap="openEvents">
-        <image src="../../assets/icons/shared/bell-red.png" mode="aspectFit"></image>
-        <text>查看事件</text>
-      </view>
-      <view class="quick-link" bindtap="openUnreadEvents">
-        <image src="../../assets/icons/shared/calendar-orange.png" mode="aspectFit"></image>
-        <text>未读事件</text>
-      </view>
-      <view class="quick-link" bindtap="openDevices">
-        <image src="../../assets/icons/shared/device-teal.png" mode="aspectFit"></image>
-        <text>管理设备</text>
-      </view>
     </view>
   </block>
 </view>

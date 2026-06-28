@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -82,16 +83,18 @@ public class MinioStorageService implements StorageService {
     public String uploadAvatar(String userId, MultipartFile file, String ext) {
         try {
             ensureBucket();
-            String key = properties.getStorage().getAvatarKeyPattern()
-                    .replace("{user_id}", userId)
-                    .replace("{ext}", ext);
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String uuid = UUID.randomUUID().toString().replace("-", "");
+            String version = timestamp + "-" + uuid;
+            String key = buildAvatarKey(userId, ext, timestamp, uuid, version);
             internalMinioClient.putObject(PutObjectArgs.builder()
                     .bucket(properties.getMinio().getBucket())
                     .object(key)
                     .contentType(file.getContentType())
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .build());
-            return trimSlash(properties.getMinio().getEffectivePublicEndpoint()) + "/" + properties.getMinio().getBucket() + "/" + key;
+            String avatarUrl = trimSlash(properties.getMinio().getEffectivePublicEndpoint()) + "/" + properties.getMinio().getBucket() + "/" + key;
+            return avatarKeyPatternHasVersion() ? avatarUrl : avatarUrl + "?v=" + version;
         } catch (Exception ex) {
             log.error("Upload avatar failed, user_id={}", userId, ex);
             throw new BizException(500, "头像上传失败");
@@ -122,6 +125,33 @@ public class MinioStorageService implements StorageService {
             key = key.replace("{" + entry.getKey() + "}", entry.getValue());
         }
         return key;
+    }
+
+    private String buildAvatarKey(String userId, String ext, String timestamp, String uuid, String version) {
+        LocalDate now = LocalDate.now();
+        Map<String, String> values = Map.of(
+                "user_id", userId,
+                "yyyy", String.valueOf(now.getYear()),
+                "MM", String.format("%02d", now.getMonthValue()),
+                "dd", String.format("%02d", now.getDayOfMonth()),
+                "timestamp", timestamp,
+                "uuid", uuid,
+                "version", version,
+                "ext", ext
+        );
+        String key = properties.getStorage().getAvatarKeyPattern();
+        if (key == null || key.isBlank()) {
+            key = "avatar/{user_id}/{timestamp}-{uuid}.{ext}";
+        }
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            key = key.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        return key;
+    }
+
+    private boolean avatarKeyPatternHasVersion() {
+        String key = properties.getStorage().getAvatarKeyPattern();
+        return key != null && (key.contains("{timestamp}") || key.contains("{uuid}") || key.contains("{version}"));
     }
 
     private String defaultExt(String contentType) {

@@ -31,7 +31,17 @@ Page(tabSwipe.withTabSwipe({
   onShow() {
     getApp().setNavLayout(this)
     getApp().deferEnsureEventRealtime()
-    this.bootstrap()
+    const changedAt = getApp().globalData.boundDevicesChangedAt || 0
+    const force = !!changedAt && this.handledBoundDevicesChangedAt !== changedAt
+    if (force) {
+      this.handledBoundDevicesChangedAt = changedAt
+      this.lastLoadedAt = 0
+      const removedDeviceIds = getApp().globalData.removedBoundDeviceIds || []
+      removedDeviceIds.forEach((deviceId) => {
+        this.removeDeviceSnapshot(deviceId)
+      })
+    }
+    this.bootstrap(force)
   },
   async onPullDownRefresh() {
     try {
@@ -63,7 +73,7 @@ Page(tabSwipe.withTabSwipe({
     this.bootstrapRequestId = requestId
     this.setData({ loading: true, loadError: false })
     try {
-      const cachedEvents = getApp().getPushedEvents()
+      const cachedEvents = this.filterEventsByDevices(getApp().getPushedEvents(), this.data.devices)
       if (cachedEvents.length) {
         this.setData({ events: cachedEvents.map(eventLabels.formatEvent) })
       }
@@ -76,25 +86,34 @@ Page(tabSwipe.withTabSwipe({
       ])
       if (requestId !== this.bootstrapRequestId) return
       const devices = devicePage.records || []
-      getApp().setPushedEvents(pulledEvents)
-      const events = this.mergeEvents(pulledEvents, this.data.events, unreadPage.records || []).map((item) => this.formatEvent(item, devices))
+      const filteredPulledEvents = this.filterEventsByDevices(pulledEvents, devices)
+      const filteredUnreadRecords = this.filterEventsByDevices(unreadPage.records || [], devices)
+      const currentEvents = this.filterEventsByDevices(this.data.events, devices)
+      getApp().setPushedEvents(filteredPulledEvents)
+      const events = this.mergeEvents(filteredPulledEvents, currentEvents, filteredUnreadRecords)
+        .map((item) => this.formatEvent(item, devices))
+      const pendingTotal = this.resolvePendingTotal(unreadPage, filteredUnreadRecords, devices)
+      const nextPendingTotal = Math.max(pendingTotal, events.length)
       this.setData({
         devices,
         onlineTotal: this.countOnlineDevices(devices),
         events,
-        pendingTotal: Math.max(Number(unreadPage.total) || 0, events.length),
+        pendingTotal: nextPendingTotal,
         initialized: true
       })
       getApp().consumePushedEvents()
-      getApp().syncUnreadEventBadge(unreadPage.total)
+      getApp().syncUnreadEventBadge(nextPendingTotal)
       this.bindWebSocket(devices)
       this.lastLoadedAt = Date.now()
     } catch (err) {
       if (requestId !== this.bootstrapRequestId) return
-      const events = getApp().consumePushedEvents().map((item) => this.formatEvent(item, this.data.devices))
+      const events = this.filterEventsByDevices(getApp().consumePushedEvents(), this.data.devices)
+        .map((item) => this.formatEvent(item, this.data.devices))
       this.setData({
         events,
-        pendingTotal: Math.max(this.data.pendingTotal, events.length),
+        pendingTotal: this.getDeviceIds(this.data.devices).length
+          ? Math.max(this.data.pendingTotal, events.length)
+          : events.length,
         loadError: true
       })
       getApp().refreshUnreadEventBadge()
@@ -110,6 +129,41 @@ Page(tabSwipe.withTabSwipe({
   },
   countOnlineDevices(devices) {
     return devices.filter((item) => (item.online_status || item.onlineStatus) === 'ONLINE').length
+  },
+  getDeviceId(item) {
+    return item && (item.device_id || item.deviceId)
+  },
+  getDeviceIds(devices = []) {
+    return (devices || []).map((item) => this.getDeviceId(item)).filter(Boolean)
+  },
+  hasKnownDeviceList(devices = this.data.devices) {
+    const app = getApp()
+    return this.getDeviceIds(devices).length > 0 ||
+      !!app.globalData.boundDevicesFetchedAt ||
+      !!app.globalData.boundDevicesChangedAt
+  },
+  filterEventsByDevices(events = [], devices = this.data.devices) {
+    const removed = new Set(getApp().globalData.removedBoundDeviceIds || [])
+    const allowedIds = this.getDeviceIds(devices)
+    const allowed = new Set(allowedIds)
+    const hasKnownDevices = this.hasKnownDeviceList(devices)
+    return (events || []).filter((item) => {
+      const deviceId = this.getDeviceId(item)
+      if (deviceId && removed.has(deviceId)) return false
+      if (!hasKnownDevices) return true
+      return deviceId && allowed.has(deviceId)
+    })
+  },
+  resolvePendingTotal(pageData, filteredRecords, devices = this.data.devices) {
+    if (this.hasKnownDeviceList(devices) && !this.getDeviceIds(devices).length) {
+      return 0
+    }
+    const total = Number(pageData && pageData.total) || 0
+    const rawCount = (pageData && pageData.records || []).length
+    if (rawCount && filteredRecords.length < rawCount && total <= rawCount) {
+      return filteredRecords.length
+    }
+    return total
   },
   mergeEvents(...groups) {
     const seen = new Set()
@@ -129,6 +183,10 @@ Page(tabSwipe.withTabSwipe({
     })
   },
   onRealtimeNewEvent(event) {
+    if (!this.filterEventsByDevices([event], this.data.devices).length) {
+      getApp().consumePushedEvents()
+      return
+    }
     const eventId = event.event_id || event.eventId
     const exists = this.data.events.some((item) => (item.event_id || item.eventId) === eventId)
     if (!exists) {
@@ -151,6 +209,26 @@ Page(tabSwipe.withTabSwipe({
       [`devices[${index}].online_status`]: nextStatus,
       [`devices[${index}].last_online_time`]: status.last_online_time || status.lastOnlineTime,
       onlineTotal: Math.max(0, this.data.onlineTotal + onlineDelta)
+    })
+  },
+  onBoundDeviceRemoved(payload) {
+    const deviceId = payload && (payload.device_id || payload.deviceId)
+    if (!deviceId) return
+    this.removeDeviceSnapshot(deviceId)
+    this.lastLoadedAt = 0
+    this.handledBoundDevicesChangedAt = getApp().globalData.boundDevicesChangedAt || this.handledBoundDevicesChangedAt
+    this.bootstrap(true)
+  },
+  removeDeviceSnapshot(deviceId) {
+    const devices = this.data.devices.filter((item) => (item.device_id || item.deviceId) !== deviceId)
+    const removedEvents = this.data.events.filter((item) => (item.device_id || item.deviceId) === deviceId)
+    const events = this.data.events.filter((item) => (item.device_id || item.deviceId) !== deviceId)
+    const removedUnreadCount = removedEvents.filter((item) => (item.read_status || item.readStatus) !== 'READ').length
+    this.setData({
+      devices,
+      onlineTotal: this.countOnlineDevices(devices),
+      events,
+      pendingTotal: Math.max(0, this.data.pendingTotal - removedUnreadCount)
     })
   },
   onRealtimeConnectionStatus(status) {

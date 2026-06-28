@@ -178,7 +178,7 @@ Page(tabSwipe.withTabSwipe({
       await deviceApi.bind(form)
       wx.showToast({ title: '绑定成功' })
       this.setData({ bindVisible: false })
-      getApp().invalidateBoundDevices()
+      getApp().invalidateBoundDevices(null, form.device_id)
       getApp().deferEnsureEventRealtime(true)
       this.reload(true)
     } finally {
@@ -224,7 +224,7 @@ Page(tabSwipe.withTabSwipe({
           await deviceApi.unbind(deviceId)
           wx.showToast({ title: '已解绑' })
           this.setData({ detailVisible: false })
-          getApp().invalidateBoundDevices()
+          getApp().invalidateBoundDevices(deviceId)
           getApp().deferEnsureEventRealtime(true)
           this.reload(true)
         } finally {

@@ -64,6 +64,12 @@ Page(tabSwipe.withTabSwipe({
     getApp().setNavLayout(this)
     getApp().deferEnsureEventRealtime()
     if (this.applyListPreset()) return
+    const changedAt = getApp().globalData.boundDevicesChangedAt || 0
+    if (changedAt && this.handledBoundDevicesChangedAt !== changedAt) {
+      this.handledBoundDevicesChangedAt = changedAt
+      this.loadDevices(true).then(() => this.reload())
+      return
+    }
     this.refreshCurrentPage()
   },
   async onPullDownRefresh() {
@@ -189,7 +195,9 @@ Page(tabSwipe.withTabSwipe({
       size: this.data.size
     }))
     if (requestId !== this.loadRequestId) return
-    const total = Number(data.total) || 0
+    const rawRecords = data.records || []
+    const records = this.filterEventsByDevices(rawRecords)
+    const total = this.resolveTotalAfterDeviceFilter(data, records)
     const pageSize = Number(data.size) || this.data.size
     const pageTotal = Math.max(1, Math.ceil(total / pageSize))
     if (page > pageTotal) {
@@ -202,7 +210,7 @@ Page(tabSwipe.withTabSwipe({
       initialized: true,
       realtimeHintCount: page === 1 ? 0 : this.data.realtimeHintCount,
       pageItems: this.buildPageItems(page, pageTotal),
-      events: (data.records || []).map((item) => this.formatEvent(item))
+      events: records.map((item) => this.formatEvent(item))
     }
     this.setData(updates)
     await this.openPendingEvent()
@@ -385,12 +393,28 @@ Page(tabSwipe.withTabSwipe({
     try {
       const data = await getApp().getBoundDevices(force)
       const devices = data.records || []
-      this.setData({
+      const deviceIds = this.getDeviceIds(devices)
+      const filteredEvents = this.filterEventsByDevices(this.data.events, devices)
+      const updates = {
         devices,
         deviceOptions: ['全部设备'].concat(devices.map((item) => item.device_name || item.deviceName || item.device_id || item.deviceId)),
-        deviceValues: [''].concat(devices.map((item) => item.device_id || item.deviceId)),
-        events: this.data.events.map((item) => this.formatEvent(item, devices))
-      })
+        deviceValues: [''].concat(deviceIds),
+        events: filteredEvents.map((item) => this.formatEvent(item, devices))
+      }
+      const selectedDeviceId = this.data.filters.device_id
+      if (selectedDeviceId && !deviceIds.includes(selectedDeviceId)) {
+        updates.filters = Object.assign({}, this.data.filters, { device_id: '' })
+        updates.deviceLabel = updates.deviceOptions[0]
+      }
+      if (!deviceIds.length) {
+        Object.assign(updates, {
+          page: 1,
+          total: 0,
+          pageTotal: 1,
+          pageItems: this.buildPageItems(1, 1)
+        })
+      }
+      this.setData(updates)
       this.bindWebSocket(devices)
     } catch (err) {
       this.setData({
@@ -404,10 +428,63 @@ Page(tabSwipe.withTabSwipe({
     websocket.connect()
     websocket.subscribeEvents(devices.map((item) => item.device_id || item.deviceId))
   },
-  onRealtimeNewEvent() {
+  getDeviceId(item) {
+    return item && (item.device_id || item.deviceId)
+  },
+  getDeviceIds(devices = []) {
+    return (devices || []).map((item) => this.getDeviceId(item)).filter(Boolean)
+  },
+  hasKnownDeviceList(devices = this.data.devices) {
+    const app = getApp()
+    return this.getDeviceIds(devices).length > 0 ||
+      !!app.globalData.boundDevicesFetchedAt ||
+      !!app.globalData.boundDevicesChangedAt
+  },
+  filterEventsByDevices(events = [], devices = this.data.devices) {
+    const removed = new Set(getApp().globalData.removedBoundDeviceIds || [])
+    const allowedIds = this.getDeviceIds(devices)
+    const allowed = new Set(allowedIds)
+    const hasKnownDevices = this.hasKnownDeviceList(devices)
+    return (events || []).filter((item) => {
+      const deviceId = this.getDeviceId(item)
+      if (deviceId && removed.has(deviceId)) return false
+      if (!hasKnownDevices) return true
+      return deviceId && allowed.has(deviceId)
+    })
+  },
+  resolveTotalAfterDeviceFilter(pageData, filteredRecords) {
+    if (this.hasKnownDeviceList() && !this.getDeviceIds(this.data.devices).length) {
+      return 0
+    }
+    const total = Number(pageData && pageData.total) || 0
+    const rawCount = (pageData && pageData.records || []).length
+    if (rawCount && filteredRecords.length < rawCount && total <= rawCount) {
+      return filteredRecords.length
+    }
+    return total
+  },
+  onRealtimeNewEvent(event) {
+    if (!this.filterEventsByDevices([event]).length) return
     if (this.pageVisible) {
       this.setData({ realtimeHintCount: this.data.realtimeHintCount + 1 })
     }
+  },
+  onBoundDeviceRemoved(payload) {
+    const deviceId = payload && (payload.device_id || payload.deviceId)
+    if (!deviceId) return
+    const events = this.data.events.filter((item) => this.getDeviceId(item) !== deviceId)
+    const updates = {
+      events,
+      total: Math.max(0, this.data.total - (this.data.events.length - events.length))
+    }
+    if (this.data.currentEvent && this.getDeviceId(this.data.currentEvent) === deviceId) {
+      updates.currentEvent = null
+      updates.detailVisible = false
+      audioPlayer.stop()
+    }
+    this.setData(updates)
+    this.handledBoundDevicesChangedAt = getApp().globalData.boundDevicesChangedAt || this.handledBoundDevicesChangedAt
+    this.loadDevices(true).then(() => this.reload())
   },
   refreshRealtimeEvents() {
     this.setData({ page: 1, realtimeHintCount: 0 }, () => this.reload())
@@ -504,7 +581,8 @@ Page(tabSwipe.withTabSwipe({
     })
   },
   async playAudio(event) {
-    const target = event && event.detail ? event.detail : this.data.currentEvent
+    const detail = event && event.detail
+    const target = detail && (detail.event_id || detail.eventId) ? detail : this.data.currentEvent
     const eventId = target && (target.event_id || target.eventId)
     if (!eventId) return
     const fileStatus = target.file_status || target.fileStatus
